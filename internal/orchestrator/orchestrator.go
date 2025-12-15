@@ -226,8 +226,29 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		detectedDirection, detectionImages, err := o.detectPageTurnDirection(ctx, tempDir, retryConfig, options)
 		if err == nil && detectedDirection != "" {
 			direction = detectedDirection
-			// Add detection images to screenshots (they are the first pages of the book)
-			screenshots = append(screenshots, detectionImages...)
+
+			// Trim detection images if border trimming is enabled
+			if options.TrimBorders {
+				trimmedDetectionImages := make([]string, 0, len(detectionImages))
+				for i, imgPath := range detectionImages {
+					trimmedPath := filepath.Join(tempDir, fmt.Sprintf("detect_trimmed_%d.png", i))
+					if err := o.trimScreenshot(imgPath, trimmedPath, options.Verbose); err != nil {
+						if options.Verbose {
+							fmt.Printf("\nWarning: Failed to trim detection image %d: %v\n", i, err)
+						}
+						// Use original if trimming fails
+						trimmedDetectionImages = append(trimmedDetectionImages, imgPath)
+					} else {
+						trimmedDetectionImages = append(trimmedDetectionImages, trimmedPath)
+						// Remove original to save space
+						os.Remove(imgPath)
+					}
+				}
+				screenshots = append(screenshots, trimmedDetectionImages...)
+			} else {
+				// Add detection images without trimming
+				screenshots = append(screenshots, detectionImages...)
+			}
 		} else {
 			direction = "right" // fallback to default
 			if options.Verbose {

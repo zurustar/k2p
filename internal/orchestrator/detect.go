@@ -20,8 +20,8 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 		fmt.Println("Auto-detecting page turn direction...")
 	}
 
-	// Create debug directory on Desktop
-	debugDir := filepath.Join(os.Getenv("HOME"), "Desktop", "k2p_debug_screenshots")
+	// Create debug directory in project
+	debugDir := filepath.Join("debug_samples")
 	os.MkdirAll(debugDir, 0755)
 	if options.Verbose {
 		fmt.Printf("  DEBUG: Screenshots will be saved to: %s\n\n", debugDir)

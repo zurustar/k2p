@@ -30,3 +30,8 @@ temp/
 
 # Configuration (user-specific)
 config.local.yaml
+
+# Test output
+debug_samples/
+test_output/
+*.pdf

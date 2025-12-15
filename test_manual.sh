@@ -28,8 +28,8 @@ echo "  4. ✅ Open the book to the first page"
 echo ""
 read -p "Press Enter when ready to start tests..."
 
-# Create test output directory
-TEST_DIR="$HOME/Desktop/k2p_test_$(date +%Y%m%d_%H%M%S)"
+# Create test output directory in project
+TEST_DIR="./test_output/manual_test_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$TEST_DIR"
 echo ""
 echo "📁 Test output directory: $TEST_DIR"

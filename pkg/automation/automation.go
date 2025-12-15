@@ -131,26 +131,16 @@ end tell
 	return nil
 }
 
-// HasMorePages attempts to detect if there are more pages
-// This is a best-effort implementation and may not be 100% reliable
-// Returns true if we should continue, false if we've reached the end
+// HasMorePages is deprecated - end detection is now done via screenshot comparison
+// This method is kept for interface compatibility but always returns true
+// The orchestrator uses screenshot similarity to detect the end of the book
 func (a *AppleScriptAutomation) HasMorePages() (bool, error) {
-	// This is a placeholder implementation
-	// In reality, detecting the end of a Kindle book is challenging
-	// We might need to:
-	// 1. Check for specific UI elements that appear at the end
-	// 2. Compare screenshots to detect if page changed
-	// 3. Use a maximum page count as a safety limit
-
-	// For now, we'll return true and rely on user interruption or a max page limit
 	return true, nil
 }
 
-// CaptureCurrentPage captures screenshot of current Kindle page
+// CaptureCurrentPage is deprecated - screenshot capture is now handled by screenshot.Capturer
+// This method is kept for interface compatibility but returns an error
 func (a *AppleScriptAutomation) CaptureCurrentPage() (image.Image, error) {
-	// This is now implemented via the screenshot package
-	// The orchestrator will handle the actual screenshot capture
-	// This method is kept for interface compatibility but delegates to screenshot package
 	return nil, errors.New("use screenshot.Capturer directly for page capture")
 }
 

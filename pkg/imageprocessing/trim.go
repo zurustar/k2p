@@ -3,214 +3,264 @@ package imageprocessing
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"image/png"
 	"os"
 )
 
+// Thresholds for "Black-ish" and "White-ish" pixels
+const (
+	blackThreshold = 60
+	whiteThreshold = 195
+)
+
 // TrimBorders removes uniform colored borders (black or white) from an image
+// Based on improved implementation from gazounomawarinoiranaifuchiwokesu
 func TrimBorders(img image.Image) image.Image {
-	bounds := img.Bounds()
-	width := bounds.Dx()
-	height := bounds.Dy()
-
-	if width == 0 || height == 0 {
+	bounds := findContentBounds(img)
+	if bounds.Empty() {
+		// Image is completely black or empty, return original
 		return img
 	}
 
-	// Determine border color from corners
-	borderColor := detectBorderColor(img)
-	if borderColor == nil {
-		// No clear border color, return original
-		return img
-	}
-
-	// Find trim boundaries
-	top := findTopBorder(img, borderColor)
-	bottom := findBottomBorder(img, borderColor)
-	left := findLeftBorder(img, borderColor)
-	right := findRightBorder(img, borderColor)
-
-	// Validate boundaries
-	if top >= bottom || left >= right {
-		// Invalid trim, return original
+	// If bounds match original, no trimming needed
+	if bounds == img.Bounds() {
 		return img
 	}
 
 	// Create trimmed image
-	trimmedBounds := image.Rect(0, 0, right-left, bottom-top)
+	trimmedBounds := image.Rect(0, 0, bounds.Dx(), bounds.Dy())
 	trimmed := image.NewRGBA(trimmedBounds)
 
-	for y := top; y < bottom; y++ {
-		for x := left; x < right; x++ {
-			trimmed.Set(x-left, y-top, img.At(x, y))
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			trimmed.Set(x-bounds.Min.X, y-bounds.Min.Y, img.At(x, y))
 		}
 	}
 
 	return trimmed
 }
 
-// detectBorderColor determines the border color from image corners
-func detectBorderColor(img image.Image) color.Color {
+// findContentBounds finds the content area by removing uniform borders
+func findContentBounds(img image.Image) image.Rectangle {
 	bounds := img.Bounds()
+	minX, minY := bounds.Max.X, bounds.Max.Y
+	maxX, maxY := bounds.Min.X, bounds.Min.Y
 
-	// Sample corners
-	topLeft := img.At(bounds.Min.X, bounds.Min.Y)
-	topRight := img.At(bounds.Max.X-1, bounds.Min.Y)
-	bottomLeft := img.At(bounds.Min.X, bounds.Max.Y-1)
-	bottomRight := img.At(bounds.Max.X-1, bounds.Max.Y-1)
+	// Helpers to check color type
+	isPixelBlack := func(r8, g8, b8 uint32) bool {
+		return r8 <= blackThreshold && g8 <= blackThreshold && b8 <= blackThreshold
+	}
+	isPixelWhite := func(r8, g8, b8 uint32) bool {
+		return r8 >= whiteThreshold && g8 >= whiteThreshold && b8 >= whiteThreshold
+	}
 
-	// Check if corners are similar (black or white)
-	if isSimilarColor(topLeft, topRight) &&
-		isSimilarColor(topLeft, bottomLeft) &&
-		isSimilarColor(topLeft, bottomRight) {
+	// 1. Determine the target background color (Black or White) based on corners
+	corners := []struct{ x, y int }{
+		{bounds.Min.X, bounds.Min.Y},
+		{bounds.Max.X - 1, bounds.Min.Y},
+		{bounds.Min.X, bounds.Max.Y - 1},
+		{bounds.Max.X - 1, bounds.Max.Y - 1},
+	}
 
-		// Check if it's black or white
-		if isBlackish(topLeft) || isWhitish(topLeft) {
-			return topLeft
+	blackCornerCount := 0
+	whiteCornerCount := 0
+
+	for _, p := range corners {
+		c := img.At(p.x, p.y)
+		r, g, b, _ := c.RGBA()
+		r8, g8, b8 := r>>8, g>>8, b>>8
+
+		if isPixelBlack(r8, g8, b8) {
+			blackCornerCount++
+		} else if isPixelWhite(r8, g8, b8) {
+			whiteCornerCount++
 		}
 	}
 
-	return nil
-}
+	type TargetMode int
+	const (
+		ModeNone TargetMode = iota
+		ModeBlack
+		ModeWhite
+	)
 
-// findTopBorder finds the top border edge
-func findTopBorder(img image.Image, borderColor color.Color) int {
-	bounds := img.Bounds()
-	threshold := 0.9 // 90% of pixels must match
+	var mode TargetMode
+	if blackCornerCount > whiteCornerCount {
+		mode = ModeBlack
+	} else if whiteCornerCount > blackCornerCount {
+		mode = ModeWhite
+	} else {
+		// Tie or neither
+		if blackCornerCount > 0 {
+			mode = ModeBlack
+		} else if whiteCornerCount > 0 {
+			mode = ModeWhite
+		} else {
+			// No detectable background color at corners
+			mode = ModeNone
+		}
+	}
 
+	if mode == ModeNone {
+		// No detectable background color, return original bounds
+		return bounds
+	}
+
+	// Helpers to check row/col uniformity
+	// A row is removable if it is MOSTLY (>95%) the Target Color
+	const noiseTolerance = 0.95
+	const lookaheadGap = 5 // Skip over thin noise lines
+
+	isRowRemovable := func(y int) bool {
+		width := bounds.Dx()
+		matchCount := 0
+
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := img.At(x, y)
+			r, g, b, _ := c.RGBA()
+			r8, g8, b8 := r>>8, g>>8, b>>8
+
+			if mode == ModeBlack && isPixelBlack(r8, g8, b8) {
+				matchCount++
+			} else if mode == ModeWhite && isPixelWhite(r8, g8, b8) {
+				matchCount++
+			}
+		}
+
+		total := float64(width)
+		return float64(matchCount)/total >= noiseTolerance
+	}
+
+	isColRemovable := func(x int) bool {
+		height := bounds.Dy()
+		matchCount := 0
+
+		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+			c := img.At(x, y)
+			r, g, b, _ := c.RGBA()
+			r8, g8, b8 := r>>8, g>>8, b>>8
+
+			if mode == ModeBlack && isPixelBlack(r8, g8, b8) {
+				matchCount++
+			} else if mode == ModeWhite && isPixelWhite(r8, g8, b8) {
+				matchCount++
+			}
+		}
+
+		total := float64(height)
+		return float64(matchCount)/total >= noiseTolerance
+	}
+
+	// Scan MinY (Top)
+	minY = bounds.Min.Y
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		matchCount := 0
-		total := 0
-
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			total++
-			if isSimilarColor(img.At(x, y), borderColor) {
-				matchCount++
+		if isRowRemovable(y) {
+			minY = y + 1
+			continue
+		}
+		// Lookahead
+		allNextRemovable := true
+		if y+lookaheadGap >= bounds.Max.Y {
+			allNextRemovable = false
+		} else {
+			for k := 1; k <= lookaheadGap; k++ {
+				if !isRowRemovable(y + k) {
+					allNextRemovable = false
+					break
+				}
 			}
 		}
-
-		if float64(matchCount)/float64(total) < threshold {
-			return y
+		if allNextRemovable {
+			minY = y + 1
+		} else {
+			break
 		}
 	}
 
-	return bounds.Min.Y
-}
+	// If whole image is removable, return empty
+	if minY >= bounds.Max.Y {
+		return image.Rectangle{}
+	}
 
-// findBottomBorder finds the bottom border edge
-func findBottomBorder(img image.Image, borderColor color.Color) int {
-	bounds := img.Bounds()
-	threshold := 0.9
-
-	for y := bounds.Max.Y - 1; y >= bounds.Min.Y; y-- {
-		matchCount := 0
-		total := 0
-
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			total++
-			if isSimilarColor(img.At(x, y), borderColor) {
-				matchCount++
+	// Scan MaxY (Bottom)
+	maxY = bounds.Max.Y
+	for y := bounds.Max.Y - 1; y >= minY; y-- {
+		if isRowRemovable(y) {
+			maxY = y
+			continue
+		}
+		// Lookahead (Upwards)
+		allPriorRemovable := true
+		if y-lookaheadGap < minY {
+			allPriorRemovable = false
+		} else {
+			for k := 1; k <= lookaheadGap; k++ {
+				if !isRowRemovable(y - k) {
+					allPriorRemovable = false
+					break
+				}
 			}
 		}
-
-		if float64(matchCount)/float64(total) < threshold {
-			return y + 1
+		if allPriorRemovable {
+			maxY = y
+		} else {
+			break
 		}
 	}
 
-	return bounds.Max.Y
-}
-
-// findLeftBorder finds the left border edge
-func findLeftBorder(img image.Image, borderColor color.Color) int {
-	bounds := img.Bounds()
-	threshold := 0.9
-
+	// Scan MinX (Left)
+	minX = bounds.Min.X
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
-		matchCount := 0
-		total := 0
-
-		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			total++
-			if isSimilarColor(img.At(x, y), borderColor) {
-				matchCount++
+		if isColRemovable(x) {
+			minX = x + 1
+			continue
+		}
+		// Lookahead
+		allNextRemovable := true
+		if x+lookaheadGap >= bounds.Max.X {
+			allNextRemovable = false
+		} else {
+			for k := 1; k <= lookaheadGap; k++ {
+				if !isColRemovable(x + k) {
+					allNextRemovable = false
+					break
+				}
 			}
 		}
-
-		if float64(matchCount)/float64(total) < threshold {
-			return x
+		if allNextRemovable {
+			minX = x + 1
+		} else {
+			break
 		}
 	}
 
-	return bounds.Min.X
-}
-
-// findRightBorder finds the right border edge
-func findRightBorder(img image.Image, borderColor color.Color) int {
-	bounds := img.Bounds()
-	threshold := 0.9
-
-	for x := bounds.Max.X - 1; x >= bounds.Min.X; x-- {
-		matchCount := 0
-		total := 0
-
-		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			total++
-			if isSimilarColor(img.At(x, y), borderColor) {
-				matchCount++
+	// Scan MaxX (Right)
+	maxX = bounds.Max.X
+	for x := bounds.Max.X - 1; x >= minX; x-- {
+		if isColRemovable(x) {
+			maxX = x
+			continue
+		}
+		// Lookahead (Leftwards)
+		allPriorRemovable := true
+		if x-lookaheadGap < minX {
+			allPriorRemovable = false
+		} else {
+			for k := 1; k <= lookaheadGap; k++ {
+				if !isColRemovable(x - k) {
+					allPriorRemovable = false
+					break
+				}
 			}
 		}
-
-		if float64(matchCount)/float64(total) < threshold {
-			return x + 1
+		if allPriorRemovable {
+			maxX = x
+		} else {
+			break
 		}
 	}
 
-	return bounds.Max.X
-}
-
-// isSimilarColor checks if two colors are similar
-func isSimilarColor(c1, c2 color.Color) bool {
-	r1, g1, b1, _ := c1.RGBA()
-	r2, g2, b2, _ := c2.RGBA()
-
-	// Convert to 8-bit values
-	r1, g1, b1 = r1>>8, g1>>8, b1>>8
-	r2, g2, b2 = r2>>8, g2>>8, b2>>8
-
-	// Allow small difference (threshold)
-	threshold := uint32(30)
-
-	return abs(r1, r2) <= threshold &&
-		abs(g1, g2) <= threshold &&
-		abs(b1, b2) <= threshold
-}
-
-// isBlackish checks if a color is close to black
-func isBlackish(c color.Color) bool {
-	r, g, b, _ := c.RGBA()
-	r, g, b = r>>8, g>>8, b>>8
-
-	threshold := uint32(50)
-	return r < threshold && g < threshold && b < threshold
-}
-
-// isWhitish checks if a color is close to white
-func isWhitish(c color.Color) bool {
-	r, g, b, _ := c.RGBA()
-	r, g, b = r>>8, g>>8, b>>8
-
-	threshold := uint32(200)
-	return r > threshold && g > threshold && b > threshold
-}
-
-// abs returns absolute difference between two uint32 values
-func abs(a, b uint32) uint32 {
-	if a > b {
-		return a - b
-	}
-	return b - a
+	return image.Rect(minX, minY, maxX, maxY)
 }
 
 // TrimImageFile trims borders from an image file and saves the result
