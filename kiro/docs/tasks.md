@@ -111,9 +111,9 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Trim uniform colored borders independently per edge
   - [x] Handle edge cases (no borders, mixed colors, top-only borders)
   - [x] 95% noise tolerance with lookahead gap skipping
-  - [x] CLI flags: --trim-borders (default), --no-trim-borders
-  - [x] Integration with orchestrator workflow
-  - [x] Apply trimming to detection images
+  - [x] CLI flag: --trim-borders (opt-in)
+  - [x] Integration with orchestrator workflow (uses originals when trimming is disabled)
+  - [x] Detection images remain untrimmed for reliability
   - [x] Comprehensive unit tests
   - [x] Based on gazounomawarinoiranaifuchiwokesu implementation
 
@@ -121,7 +121,8 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Fullscreen Kindle support
   - [x] Screen recording permission handling
   - [x] Space switching for fullscreen apps
-  - [x] 2-second activation delay
+  - [x] Kindleを一度だけアクティブ化し、その後は再アクティベーションなしでCaptureWithoutActivationを使用
+  - [x] ページめくり後にPageDelayで待機してから次のキャプチャを実施
 
 - [x] End-of-book detection
   - [x] Detect 5 consecutive identical pages
