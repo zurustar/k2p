@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -158,7 +159,15 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 
 	result.Duration = time.Since(startTime)
 
-	// Step 11: Display success message
+	// Step 11: Wait for macOS to clear screen recording indicator (blue dot)
+	// The optimization removed the 2-second wait that previously allowed this
+	time.Sleep(1 * time.Second)
+
+	// Step 12: Play completion sound
+	// Use macOS system sound to notify user (helpful when Kindle is in foreground)
+	exec.Command("afplay", "/System/Library/Sounds/Glass.aiff").Start()
+
+	// Step 13: Display success message
 	fmt.Println("\n=== Conversion Complete ===")
 	fmt.Printf("Output: %s\n", outputPath)
 	fmt.Printf("Pages: %d\n", len(screenshots)) // Show actual PDF page count
@@ -241,6 +250,17 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 
 	fmt.Println("\nCapturing pages...")
 
+	// Activate Kindle once before starting page capture
+	// This ensures Kindle is in the foreground and waits for Space switching
+	fmt.Println("Activating Kindle app...")
+	dummyPath := filepath.Join(tempDir, "activation_check.png")
+	if err := o.capturer.CaptureFrontmostWindow(dummyPath); err != nil {
+		return 0, nil, fmt.Errorf("failed to activate Kindle: %w", err)
+	}
+	// Remove the dummy screenshot
+	os.Remove(dummyPath)
+	fmt.Println("✓ Kindle is active and ready")
+
 	for pageNum <= maxPages {
 		// Check context cancellation
 		select {
@@ -252,10 +272,10 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		// Display progress
 		fmt.Printf("\rCapturing page %d...", pageNum)
 
-		// Capture screenshot with retry (captures frontmost window)
+		// Capture screenshot with retry (without activation - much faster!)
 		screenshotPath := filepath.Join(tempDir, fmt.Sprintf("page_%04d.png", pageNum))
 		err := RetryWithBackoff(ctx, retryConfig, func() error {
-			return o.capturer.CaptureFrontmostWindow(screenshotPath)
+			return o.capturer.CaptureWithoutActivation(screenshotPath)
 		})
 		if err != nil {
 			// CRITICAL: If we can't capture screenshots, the entire conversion is pointless

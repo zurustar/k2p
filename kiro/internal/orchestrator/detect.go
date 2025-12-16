@@ -27,11 +27,11 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 		fmt.Printf("  DEBUG: Screenshots will be saved to: %s\n\n", debugDir)
 	}
 
-	// Step 1: Capture cover page
+	// Step 1: Capture cover page (activate Kindle once)
 	coverPath := filepath.Join(tempDir, "detect_cover.png")
 	coverDebugPath := filepath.Join(debugDir, "detect_cover.png")
 	if options.Verbose {
-		fmt.Println("  [Cover] Capturing cover page...")
+		fmt.Println("  [Cover] Activating Kindle and capturing cover page...")
 	}
 	err := RetryWithBackoff(ctx, retryConfig, func() error {
 		return o.capturer.CaptureFrontmostWindow(coverPath)
@@ -43,6 +43,7 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 	exec.Command("cp", coverPath, coverDebugPath).Run()
 	if options.Verbose {
 		fmt.Printf("  [Cover] Saved: %s\n", coverDebugPath)
+		fmt.Println("  [Cover] Kindle is now active, using fast capture for detection...")
 	}
 
 	// Step 2: Test RIGHT arrow - press 3 times
@@ -62,20 +63,17 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 			return "", nil, fmt.Errorf("failed to press right arrow: %w", err)
 		}
 
-		// Wait for page to load
-		if options.Verbose {
-			fmt.Println("  Waiting 3 seconds...")
-		}
-		time.Sleep(time.Second * 3)
+		// Wait for page to load (use configured PageDelay)
+		time.Sleep(options.PageDelay)
 
-		// Capture screenshot
+		// Capture screenshot (fast - no activation)
 		rightPath := filepath.Join(tempDir, fmt.Sprintf("detect_right_%d.png", i))
 		rightDebugPath := filepath.Join(debugDir, fmt.Sprintf("detect_right_%d.png", i))
 		if options.Verbose {
 			fmt.Printf("  [Right %d] Capturing screenshot...\n", i)
 		}
 		err = RetryWithBackoff(ctx, retryConfig, func() error {
-			return o.capturer.CaptureFrontmostWindow(rightPath)
+			return o.capturer.CaptureWithoutActivation(rightPath)
 		})
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to capture right %d: %w", i, err)
@@ -142,20 +140,17 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 			return "", nil, fmt.Errorf("failed to press left arrow: %w", err)
 		}
 
-		// Wait for page to load
-		if options.Verbose {
-			fmt.Println("  Waiting 3 seconds...")
-		}
-		time.Sleep(time.Second * 3)
+		// Wait for page to load (use configured PageDelay)
+		time.Sleep(options.PageDelay)
 
-		// Capture screenshot
+		// Capture screenshot (fast - no activation)
 		leftPath := filepath.Join(tempDir, fmt.Sprintf("detect_left_%d.png", i))
 		leftDebugPath := filepath.Join(debugDir, fmt.Sprintf("detect_left_%d.png", i))
 		if options.Verbose {
 			fmt.Printf("  [Left %d] Capturing screenshot...\n", i)
 		}
 		err = RetryWithBackoff(ctx, retryConfig, func() error {
-			return o.capturer.CaptureFrontmostWindow(leftPath)
+			return o.capturer.CaptureWithoutActivation(leftPath)
 		})
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to capture left %d: %w", i, err)
