@@ -41,6 +41,7 @@ The application follows a simple layered architecture:
 
 **Responsibilities**:
 - Parse command-line flags (output path, quality settings, delays, verbose mode, version, help)
+- Provide opt-in flags for border trimming and page turn direction overrides
 - Display help and version information
 - Validate user input before starting conversion
 - Show clear error messages for invalid arguments
@@ -207,7 +208,13 @@ type ConversionOptions struct {
     
     // Auto-confirm overwrite without prompting
     AutoConfirm bool
-    
+
+    // Trim borders from captured pages (opt-in)
+    TrimBorders bool
+
+    // Page turn key: "right" or "left" (auto-detects unless forced to left)
+    PageTurnKey string
+
     // Configuration file path
     ConfigFile string
 }
@@ -266,23 +273,30 @@ type PDFOptions struct {
    - Wait for user confirmation (press Enter to continue)
    - Apply startup delay with countdown timer (if configured)
    - Verify Kindle app is in foreground (bring to front if needed)
+   - Auto-detect page turn direction unless user forces left arrow key
 
 4. **Page Capture Loop**
    ```
    Create temporary directory
+   direction = detectPageTurnDirection() // uses sample captures unless user forced "left"
+
+   // Activate Kindle once; keep it foregrounded for faster capture
+   activateKindleAndDiscardProbeCapture()
+
    pageNumber = 1
-   
-   while HasMorePages():
+
+   while pageNumber <= maxPages:
        Display progress: "Capturing page {pageNumber}..."
-       screenshot = CaptureCurrentPage()
-       Save screenshot to temp directory
-       
-       if HasMorePages():
-           TurnNextPage()
-           Wait for PageDelay
-           pageNumber++
-       else:
+       screenshot = CaptureWithoutActivationWithRetry()
+       Save screenshot to temp directory (trim if enabled)
+
+       if lastFiveScreenshotsAreIdentical():
+           removeRatingScreensAndStop()
            break
+
+       TurnNextPage(direction) with retry
+       Wait for PageDelay (default 500ms) to let page settle
+       pageNumber++
    ```
 
 5. **PDF Generation**
@@ -293,6 +307,7 @@ type PDFOptions struct {
 
 6. **Cleanup and Completion**
    - Delete temporary screenshot files
+   - Wait for macOS screen recording indicator to clear
    - Display success message with output path, page count, and file size
    - Exit with status 0
 
