@@ -4,6 +4,6 @@ page_delay: 500ms
 startup_delay: 3s
 show_countdown: true
 pdf_quality: high
-trim_borders: true
+trim_borders: false
 verbose: false
 auto_confirm: false

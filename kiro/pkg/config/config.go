@@ -77,7 +77,7 @@ func (cm *DefaultConfigManager) GetDefaults() *ConversionOptions {
 		PDFQuality:        "high",
 		Verbose:           false,
 		AutoConfirm:       false,
-		TrimBorders:       true,    // Enable by default
+		TrimBorders:       false,   // Disable by default (opt-in)
 		PageTurnKey:       "right", // Default to right arrow
 	}
 }
@@ -167,6 +167,10 @@ func (cm *DefaultConfigManager) MergeOptions(cliOptions, fileOptions *Conversion
 		merged.ShowCountdown = fileOptions.ShowCountdown
 		merged.Verbose = fileOptions.Verbose
 		merged.AutoConfirm = fileOptions.AutoConfirm
+		merged.TrimBorders = fileOptions.TrimBorders
+		if fileOptions.PageTurnKey != "" {
+			merged.PageTurnKey = fileOptions.PageTurnKey
+		}
 	}
 
 	// Apply CLI options (these take precedence)
@@ -191,6 +195,12 @@ func (cm *DefaultConfigManager) MergeOptions(cliOptions, fileOptions *Conversion
 		}
 		if cliOptions.AutoConfirm {
 			merged.AutoConfirm = true
+		}
+		if cliOptions.TrimBorders {
+			merged.TrimBorders = true
+		}
+		if cliOptions.PageTurnKey != "" {
+			merged.PageTurnKey = cliOptions.PageTurnKey
 		}
 		if cliOptions.ConfigFile != "" {
 			merged.ConfigFile = cliOptions.ConfigFile

@@ -16,7 +16,7 @@ GOMOD=$(GOCMD) mod
 build:
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/k2p
+	$(GOBUILD) -ldflags="-X 'main.buildTime=$(shell date '+%Y-%m-%d %H:%M:%S')'" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/k2p
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Run all tests

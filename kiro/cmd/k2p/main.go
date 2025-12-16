@@ -11,7 +11,9 @@ import (
 	"github.com/oumi/k2p/pkg/config"
 )
 
-const version = "0.1.0"
+const version = "0.1.0-debug-20251216"
+
+var buildTime = "unknown" // Set via -ldflags during build
 
 func main() {
 	// Define CLI flags
@@ -27,8 +29,7 @@ func main() {
 		verboseShort     = flag.Bool("v", false, "Enable verbose logging (shorthand)")
 		autoConfirm      = flag.Bool("auto-confirm", false, "Skip confirmation prompts")
 		autoConfirmShort = flag.Bool("y", false, "Skip confirmation prompts (shorthand)")
-		trimBorders      = flag.Bool("trim-borders", true, "Trim black/white borders from screenshots")
-		noTrimBorders    = flag.Bool("no-trim-borders", false, "Disable border trimming")
+		trimBorders      = flag.Bool("trim-borders", false, "Trim black/white borders from screenshots")
 		pageTurnKey      = flag.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
 		showVersion      = flag.Bool("version", false, "Show version information")
 		showHelp         = flag.Bool("help", false, "Show help message")
@@ -40,6 +41,7 @@ func main() {
 	// Handle version flag
 	if *showVersion {
 		fmt.Printf("k2p version %s\n", version)
+		fmt.Printf("Built: %s\n", buildTime)
 		return
 	}
 
@@ -66,7 +68,7 @@ func main() {
 		Verbose:     *verbose,
 		AutoConfirm: *autoConfirm,
 		ConfigFile:  *configFile,
-		TrimBorders: *trimBorders && !*noTrimBorders, // Default true unless disabled
+		TrimBorders: *trimBorders, // Opt-in: only trim when explicitly enabled
 		PageTurnKey: *pageTurnKey,
 	}
 
@@ -125,6 +127,12 @@ func main() {
 		}
 	})
 
+	// Display version before conversion
+	if finalOpts.Verbose {
+		fmt.Printf("k2p version: %s\n", version)
+		fmt.Printf("Built: %s\n\n", buildTime)
+	}
+
 	// Run conversion
 	result, err := orch.ConvertCurrentBook(ctx, finalOpts)
 	if err != nil {
@@ -141,6 +149,9 @@ func main() {
 			fmt.Printf("  - %s\n", warning)
 		}
 	}
+
+	// Display build time
+	fmt.Printf("Binary built: %s\n", buildTime)
 
 	os.Exit(0)
 }
@@ -167,6 +178,8 @@ OPTIONS:
     --startup-delay DURATION  Delay before starting automation (default: 3s)
     --pdf-quality LEVEL       PDF quality: low, medium, high (default: high)
     --config FILE             Configuration file path
+    --trim-borders            Enable border trimming (removes black/white borders)
+                              Note: Most effective for fixed-layout books
     -v, --verbose             Enable verbose logging
     -y, --auto-confirm        Skip confirmation prompts
     --version                 Show version information
@@ -188,6 +201,9 @@ EXAMPLES:
     # Verbose mode with auto-confirm
     k2p -v -y
 
+    # Enable border trimming
+    k2p --trim-borders
+
 CONFIGURATION FILE:
     You can create a YAML configuration file to set default options:
 
@@ -197,6 +213,7 @@ CONFIGURATION FILE:
     startup_delay: 3s
     show_countdown: true
     pdf_quality: high
+    trim_borders: false  # Set to true to enable border trimming
     verbose: false
     auto_confirm: false
 
@@ -214,7 +231,5 @@ TROUBLESHOOTING:
 
     "Insufficient disk space"
       → Free up disk space (needs ~1-2 MB per page)
-
-For more information, visit: https://github.com/oumi/k2p
 `, version)
 }

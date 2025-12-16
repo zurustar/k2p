@@ -6,7 +6,7 @@ macOS上でKindleの本をPDF形式に変換するGoベースのコマンドラ�
 
 - 📚 現在開いているKindleの本をPDFに変換
 - 🤖 自動ページめくりとスクリーンショット撮影
-- ✂️ 自動ボーダートリミング（黒/白の縁を削除）
+- ✂️ オプションのボーダートリミング（黒/白の縁を削除）
 - 🔄 ページめくり方向の自動検出
 - ⚙️ カスタマイズ可能な品質とタイミング設定
 - 🎯 シンプルなコマンドラインインターフェース
@@ -127,8 +127,8 @@ k2p --config config.yaml
 # 詳細出力
 k2p --verbose
 
-# ボーダートリミングを無効化
-k2p --no-trim-borders
+# ボーダートリミングを有効化
+k2p --trim-borders
 
 # ページめくり方向を手動指定（通常は自動検出）
 k2p --page-turn-key left
@@ -145,7 +145,7 @@ page_delay: 500ms
 startup_delay: 3s
 show_countdown: true
 pdf_quality: high
-trim_borders: true
+trim_borders: false  # trueに設定すると有効化
 page_turn_key: right  # または "left"（通常は自動検出）
 verbose: false
 auto_confirm: false
@@ -170,8 +170,7 @@ auto_confirm: false
 | `--page-delay DURATION` | ページめくり間の遅延 | 500ms |
 | `--startup-delay DURATION` | 開始前の遅延 | 3s |
 | `--pdf-quality LEVEL` | PDF品質 (low/medium/high) | high |
-| `--trim-borders` | ボーダートリミングを有効化 | true |
-| `--no-trim-borders` | ボーダートリミングを無効化 | - |
+| `--trim-borders` | ボーダートリミングを有効化 | false |
 | `--page-turn-key DIRECTION` | ページめくり方向 (right/left) | 自動検出 |
 | `--config FILE` | 設定ファイルパス | - |
 | `-v, --verbose` | 詳細ログを有効化 | false |

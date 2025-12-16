@@ -161,7 +161,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	// Step 11: Display success message
 	fmt.Println("\n=== Conversion Complete ===")
 	fmt.Printf("Output: %s\n", outputPath)
-	fmt.Printf("Pages: %d\n", pageCount)
+	fmt.Printf("Pages: %d\n", len(screenshots)) // Show actual PDF page count
 	fmt.Printf("Size: %.2f MB\n", float64(result.FileSize)/(1024*1024))
 	fmt.Printf("Duration: %s\n", result.Duration.Round(time.Second))
 
@@ -227,28 +227,8 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		if err == nil && detectedDirection != "" {
 			direction = detectedDirection
 
-			// Trim detection images if border trimming is enabled
-			if options.TrimBorders {
-				trimmedDetectionImages := make([]string, 0, len(detectionImages))
-				for i, imgPath := range detectionImages {
-					trimmedPath := filepath.Join(tempDir, fmt.Sprintf("detect_trimmed_%d.png", i))
-					if err := o.trimScreenshot(imgPath, trimmedPath, options.Verbose); err != nil {
-						if options.Verbose {
-							fmt.Printf("\nWarning: Failed to trim detection image %d: %v\n", i, err)
-						}
-						// Use original if trimming fails
-						trimmedDetectionImages = append(trimmedDetectionImages, imgPath)
-					} else {
-						trimmedDetectionImages = append(trimmedDetectionImages, trimmedPath)
-						// Remove original to save space
-						os.Remove(imgPath)
-					}
-				}
-				screenshots = append(screenshots, trimmedDetectionImages...)
-			} else {
-				// Add detection images without trimming
-				screenshots = append(screenshots, detectionImages...)
-			}
+			// Add detection images to screenshots (no trimming needed since trimming is opt-in now)
+			screenshots = append(screenshots, detectionImages...)
 		} else {
 			direction = "right" // fallback to default
 			if options.Verbose {
@@ -305,15 +285,27 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		// If the last 5 pages are all identical, we've reached the end
 		// (This handles books with blank pages at the end)
 		if len(screenshots) >= 5 {
+			// Always show debug info for end detection
+			fmt.Printf("\n[DEBUG] End detection check: total screenshots = %d\n", len(screenshots))
+			fmt.Printf("[DEBUG] Checking last 5 screenshots (indices %d-%d):\n",
+				len(screenshots)-5, len(screenshots)-1)
+			for i := len(screenshots) - 5; i < len(screenshots); i++ {
+				fmt.Printf("[DEBUG]   [%d] %s\n", i, filepath.Base(screenshots[i]))
+			}
+
 			allIdentical := true
 			for i := len(screenshots) - 4; i < len(screenshots); i++ {
 				similarity, err := imageprocessing.CompareImages(screenshots[i-1], screenshots[i])
-				if err != nil && options.Verbose {
-					fmt.Printf("\nWarning: Failed to compare screenshots for end detection: %v\n", err)
+				if err != nil {
+					fmt.Printf("\n[DEBUG] Warning: Failed to compare screenshots for end detection: %v\n", err)
 					allIdentical = false
 					break
 				}
-				if similarity < 0.95 {
+				fmt.Printf("[DEBUG] Compare [%d] %s vs [%d] %s: %.2f%% similarity\n",
+					i-1, filepath.Base(screenshots[i-1]),
+					i, filepath.Base(screenshots[i]),
+					similarity*100)
+				if similarity < 0.995 { // 99.5% - end-of-book pages are 100% identical
 					allIdentical = false
 					break
 				}
@@ -323,12 +315,12 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 				// Last 5 pages are identical - we've reached the end
 				// These are the rating/review screens, not actual book content
 				// Remove the last 5 pages from screenshots
-				if options.Verbose {
-					fmt.Printf("\n\nReached end of book (last 5 pages are identical)\n")
-					fmt.Printf("Removing last 5 pages (rating screens) from PDF\n")
-				}
+				fmt.Printf("\n\nReached end of book (last 5 pages are identical)\n")
+				fmt.Printf("Removing last 5 pages (rating screens) from PDF\n")
 				screenshots = screenshots[:len(screenshots)-5]
 				break
+			} else {
+				fmt.Printf("[DEBUG] Not all identical, continuing...\n")
 			}
 		}
 
