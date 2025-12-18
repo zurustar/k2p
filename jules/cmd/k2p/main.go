@@ -17,12 +17,12 @@ func main() {
 	output := flag.String("output", "output.pdf", "Output PDF filename")
 	tempDir := flag.String("temp-dir", "screenshots", "Temporary directory for screenshots")
 	pages := flag.Int("pages", 0, "Number of pages to capture (optional, default: infinite until Ctrl+C)")
-	direction := flag.String("direction", "ltr", "Page direction: 'ltr' (Left-to-Right) or 'rtl' (Right-to-Left)")
+	direction := flag.String("direction", "auto", "Page direction: 'ltr', 'rtl', or 'auto' (detects automatically)")
 	maxSize := flag.String("max-size", "180MB", "Maximum size of generated PDF (e.g., '1.8MB', '100KB'). Default: 180MB")
 	flag.Parse()
 
-	if *direction != "ltr" && *direction != "rtl" {
-		fmt.Println("Error: direction must be 'ltr' or 'rtl'")
+	if *direction != "ltr" && *direction != "rtl" && *direction != "auto" {
+		fmt.Println("Error: direction must be 'ltr', 'rtl', or 'auto'")
 		os.Exit(1)
 	}
 

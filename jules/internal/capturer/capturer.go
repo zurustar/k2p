@@ -58,6 +58,11 @@ func (c *Capturer) CaptureLoop(ctx context.Context, outputDir string, pages int,
 	pageNum := 1
 	fmt.Println("Press Ctrl+C to stop capturing early.")
 
+	var currentDirection string
+	if direction != "auto" {
+		currentDirection = direction
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -79,29 +84,102 @@ func (c *Capturer) CaptureLoop(ctx context.Context, outputDir string, pages int,
 			return fmt.Errorf("failed to take screenshot: %w", err)
 		}
 
+		// End of Book Detection: Compare with previous page
+		if pageNum > 1 {
+			prevFilename := filepath.Join(outputDir, fmt.Sprintf("page_%04d.png", pageNum-1))
+			identical, err := ImagesAreIdentical(filename, prevFilename)
+			if err != nil {
+				fmt.Printf("Warning: failed to compare images: %v\n", err)
+			} else if identical {
+				fmt.Println("Page content is identical to previous page. Assuming end of book.")
+				// Remove the duplicate last page
+				if err := os.Remove(filename); err != nil {
+					fmt.Printf("Warning: failed to remove duplicate page: %v\n", err)
+				}
+				break
+			}
+		}
+
+		// Automatic Direction Detection
+		if currentDirection == "" && pageNum == 1 {
+			// We need to determine direction.
+			// Try Right first (LTR assumption)
+			fmt.Println("Auto-detecting direction: trying 'right' (LTR)...")
+			if err := c.platform.PressKey("right"); err != nil {
+				return fmt.Errorf("failed to turn page: %w", err)
+			}
+			c.wait(ctx)
+
+			// Capture provisional page 2
+			testFilename := filepath.Join(outputDir, fmt.Sprintf("page_%04d.png", pageNum+1))
+			if err := c.platform.Screenshot(testFilename); err != nil {
+				return fmt.Errorf("failed to take screenshot: %w", err)
+			}
+
+			identical, err := ImagesAreIdentical(filename, testFilename) // compare page 1 and test page 2
+			if err != nil {
+				return fmt.Errorf("failed to compare images during detection: %w", err)
+			}
+
+			if !identical {
+				currentDirection = "ltr"
+				fmt.Println("Direction detected: LTR")
+				// We have page 1 and page 2.
+				pageNum = 2
+				continue // Continue loop, next iter will be page 3 (pageNum increment at bottom)
+			} else {
+				// Right didn't work. Try Left.
+				fmt.Println("Content didn't change. Trying 'left' (RTL)...")
+				// Remove the identical test file
+				os.Remove(testFilename)
+
+				if err := c.platform.PressKey("left"); err != nil {
+					return fmt.Errorf("failed to turn page: %w", err)
+				}
+				c.wait(ctx)
+
+				if err := c.platform.Screenshot(testFilename); err != nil {
+					return fmt.Errorf("failed to take screenshot: %w", err)
+				}
+
+				identical, err = ImagesAreIdentical(filename, testFilename)
+				if err != nil {
+					return fmt.Errorf("failed to compare images during detection: %w", err)
+				}
+
+				if !identical {
+					currentDirection = "rtl"
+					fmt.Println("Direction detected: RTL")
+					pageNum = 2
+					continue
+				} else {
+					return fmt.Errorf("could not detect direction: content did not change in either direction")
+				}
+			}
+		}
+
 		keyDirection := "right"
-		if direction == "rtl" {
+		if currentDirection == "rtl" {
 			keyDirection = "left"
 		}
+
 		if err := c.platform.PressKey(keyDirection); err != nil {
 			return fmt.Errorf("failed to turn page: %w", err)
 		}
 
-		// Wait for page turn animation
-		// Kindle for PC animation can be slow. 1.5s is a safe starting point.
-		// Use a ticker or sleep? Sleep is fine as it needs to be sequential.
-		// Check context during sleep is better but sleep is short.
-		timer := time.NewTimer(1500 * time.Millisecond)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
-			fmt.Println("\nCapture stopped by user.")
-			return nil
-		case <-timer.C:
-		}
+		c.wait(ctx)
 
 		pageNum++
 	}
 
 	return nil
+}
+
+func (c *Capturer) wait(ctx context.Context) {
+	timer := time.NewTimer(1500 * time.Millisecond)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+	case <-timer.C:
+	}
 }
