@@ -99,3 +99,17 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 3. WHEN the Kindle app is not in the foreground during automation, THE Kindle_Converter SHALL attempt to bring it to the front or display an error message
 4. WHEN automation fails due to app focus issues, THE Kindle_Converter SHALL provide clear instructions for the user to manually bring the Kindle app to the foreground
 5. WHEN a startup delay is configured, THE Kindle_Converter SHALL display a countdown timer showing the remaining preparation time
+
+### Requirement 8
+
+**User Story:** As a user converting Kindle books with varying margin designs, I want to analyze the optimal trim margins for a book and then apply those margins consistently, so that I can remove Kindle app margins without accidentally trimming book content.
+
+#### Acceptance Criteria
+
+1. WHEN a user runs the tool in margin detection mode, THE Kindle_Converter SHALL capture all pages and analyze the trim margins without generating a PDF
+2. WHEN margin detection completes, THE Kindle_Converter SHALL report the minimum trim values (in pixels) for top, bottom, left, and right edges across all pages
+3. WHEN a user runs the tool in PDF generation mode with custom trim margins, THE Kindle_Converter SHALL apply the specified pixel values to trim each page before PDF generation
+4. WHEN custom trim margins are specified, THE Kindle_Converter SHALL require all four margin values (top, bottom, left, right) to be provided
+5. WHEN margin detection mode is active, THE Kindle_Converter SHALL NOT generate a PDF output file
+6. WHEN analyzing margins, THE Kindle_Converter SHALL identify the minimum removable margin for each edge to avoid trimming actual book content that may appear on some pages
+7. WHEN trim margins are applied during PDF generation, THE Kindle_Converter SHALL use the same trimming algorithm for consistency with margin detection results

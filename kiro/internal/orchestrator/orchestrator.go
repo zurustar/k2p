@@ -133,7 +133,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	defer o.fileManager.CleanupTempDir(tempDir)
 
 	// Step 8: Page capture loop
-	pageCount, screenshots, err := o.capturePages(ctx, tempDir, options)
+	pageCount, screenshots, margins, allMargins, err := o.capturePages(ctx, tempDir, options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to capture pages: %w", err)
 	}
@@ -144,14 +144,81 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 		fmt.Printf("\nCaptured %d pages\n", pageCount)
 	}
 
-	// Step 9: Generate PDF
+	// Step 9: Handle mode-specific workflow
+	if options.Mode == "detect" {
+		// Detection mode: analyze margins and report, no PDF generation
+		fmt.Println("\n=== Margin Analysis Complete ===")
+		fmt.Printf("Analyzed %d pages\n", pageCount)
+
+		// Show per-page margins if verbose
+		if options.Verbose && len(allMargins) > 0 {
+			fmt.Println("\nPer-page margin details:")
+			for i, m := range allMargins {
+				fmt.Printf("  Page %3d: Top=%3d Bottom=%3d Left=%3d Right=%3d\n",
+					i+1, m.Top, m.Bottom, m.Left, m.Right)
+			}
+		}
+
+		fmt.Printf("\nMinimum removable margins (safe for all pages):\n")
+		fmt.Printf("  Top:    %d pixels\n", margins.Top)
+		fmt.Printf("  Bottom: %d pixels\n", margins.Bottom)
+		fmt.Printf("  Left:   %d pixels\n", margins.Left)
+		fmt.Printf("  Right:  %d pixels\n", margins.Right)
+		fmt.Printf("\nTo generate PDF with these margins, run:\n")
+		fmt.Printf("  k2p --mode generate --trim-top %d --trim-bottom %d --trim-left %d --trim-right %d\n",
+			margins.Top, margins.Bottom, margins.Left, margins.Right)
+
+		result.Duration = time.Since(startTime)
+		fmt.Printf("\nDuration: %s\n", result.Duration.Round(time.Second))
+
+		// Play completion sound
+		exec.Command("afplay", "/System/Library/Sounds/Glass.aiff").Start()
+
+		return result, nil
+	}
+
+	// Step 10: Apply custom trimming to all screenshots (if specified)
+	// This is done AFTER capture to avoid interfering with end-of-book detection
+	hasCustomTrim := options.Mode == "generate" &&
+		(options.TrimTop != 0 || options.TrimBottom != 0 || options.TrimLeft != 0 || options.TrimRight != 0)
+
+	if hasCustomTrim {
+		if options.Verbose {
+			fmt.Printf("\nApplying custom trimming to %d pages...\n", len(screenshots))
+			fmt.Printf("  Trim margins: Top=%d Bottom=%d Left=%d Right=%d\n",
+				options.TrimTop, options.TrimBottom, options.TrimLeft, options.TrimRight)
+		}
+
+		trimmedScreenshots := make([]string, 0, len(screenshots))
+		for i, screenshot := range screenshots {
+			trimmedPath := filepath.Join(tempDir, fmt.Sprintf("page_%04d_trimmed.png", i+1))
+			if err := o.trimScreenshotWithCustomMargins(screenshot, trimmedPath,
+				options.TrimTop, options.TrimBottom, options.TrimLeft, options.TrimRight, false); err != nil {
+				if options.Verbose {
+					fmt.Printf("  Warning: Failed to trim page %d, using original: %v\n", i+1, err)
+				}
+				trimmedScreenshots = append(trimmedScreenshots, screenshot)
+			} else {
+				trimmedScreenshots = append(trimmedScreenshots, trimmedPath)
+				// Remove original to save space
+				os.Remove(screenshot)
+			}
+		}
+		screenshots = trimmedScreenshots
+
+		if options.Verbose {
+			fmt.Printf("✓ Trimming complete\n")
+		}
+	}
+
+	// Step 11: Generate PDF (generate mode only)
 	fmt.Println("\nGenerating PDF...")
 	pdfOpts := pdf.GetQualitySettings(options.PDFQuality)
 	if err := o.pdfGen.CreatePDF(screenshots, outputPath, pdfOpts); err != nil {
 		return nil, fmt.Errorf("failed to generate PDF: %w", err)
 	}
 
-	// Step 10: Get file size
+	// Step 11: Get file size
 	fileInfo, err := os.Stat(outputPath)
 	if err == nil {
 		result.FileSize = fileInfo.Size()
@@ -159,15 +226,15 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 
 	result.Duration = time.Since(startTime)
 
-	// Step 11: Wait for macOS to clear screen recording indicator (blue dot)
+	// Step 12: Wait for macOS to clear screen recording indicator (blue dot)
 	// The optimization removed the 2-second wait that previously allowed this
 	time.Sleep(1 * time.Second)
 
-	// Step 12: Play completion sound
+	// Step 13: Play completion sound
 	// Use macOS system sound to notify user (helpful when Kindle is in foreground)
 	exec.Command("afplay", "/System/Library/Sounds/Glass.aiff").Start()
 
-	// Step 13: Display success message
+	// Step 14: Display success message
 	fmt.Println("\n=== Conversion Complete ===")
 	fmt.Printf("Output: %s\n", outputPath)
 	fmt.Printf("Pages: %d\n", len(screenshots)) // Show actual PDF page count
@@ -218,11 +285,30 @@ func (o *DefaultOrchestrator) validateKindleState(verbose bool) error {
 }
 
 // capturePages captures all pages from the current book
-func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, options *config.ConversionOptions) (int, []string, error) {
+// Returns: pageCount, screenshot paths, aggregated margins, all page margins, error
+func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, options *config.ConversionOptions) (int, []string, imageprocessing.TrimMargins, []imageprocessing.TrimMargins, error) {
 	var screenshots []string
+	var allMargins []imageprocessing.TrimMargins
 	pageNum := 1
 	maxPages := 1000 // Safety limit
 	retryConfig := DefaultRetryConfig()
+
+	// Determine if we should apply custom trimming
+	// Allow 0 values - user can trim only specific edges
+	// Trimming is enabled if any trim value is non-zero
+	hasCustomTrim := options.Mode == "generate" &&
+		(options.TrimTop != 0 || options.TrimBottom != 0 || options.TrimLeft != 0 || options.TrimRight != 0)
+
+	// Debug: Show trimming configuration
+	if options.Verbose {
+		fmt.Printf("\n[DEBUG] Custom trimming configuration:\n")
+		fmt.Printf("  Mode:       %s\n", options.Mode)
+		fmt.Printf("  TrimTop:    %d\n", options.TrimTop)
+		fmt.Printf("  TrimBottom: %d\n", options.TrimBottom)
+		fmt.Printf("  TrimLeft:   %d\n", options.TrimLeft)
+		fmt.Printf("  TrimRight:  %d\n", options.TrimRight)
+		fmt.Printf("  hasCustomTrim: %v\n", hasCustomTrim)
+	}
 
 	// Auto-detect page turn direction (unless explicitly set to "left")
 	direction := options.PageTurnKey
@@ -255,7 +341,7 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 	fmt.Println("Activating Kindle app...")
 	dummyPath := filepath.Join(tempDir, "activation_check.png")
 	if err := o.capturer.CaptureFrontmostWindow(dummyPath); err != nil {
-		return 0, nil, fmt.Errorf("failed to activate Kindle: %w", err)
+		return 0, nil, imageprocessing.TrimMargins{}, nil, fmt.Errorf("failed to activate Kindle: %w", err)
 	}
 	// Remove the dummy screenshot
 	os.Remove(dummyPath)
@@ -265,7 +351,8 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		// Check context cancellation
 		select {
 		case <-ctx.Done():
-			return pageNum - 1, screenshots, ctx.Err()
+			aggregatedMargins := imageprocessing.AggregateMinimumMargins(allMargins)
+			return pageNum - 1, screenshots, aggregatedMargins, allMargins, ctx.Err()
 		default:
 		}
 
@@ -279,31 +366,21 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		})
 		if err != nil {
 			// CRITICAL: If we can't capture screenshots, the entire conversion is pointless
-			return pageNum - 1, screenshots, fmt.Errorf("failed to capture page %d: %w", pageNum, err)
+			aggregatedMargins := imageprocessing.AggregateMinimumMargins(allMargins)
+			return pageNum - 1, screenshots, aggregatedMargins, allMargins, fmt.Errorf("failed to capture page %d: %w", pageNum, err)
 		}
 
-		// Trim borders if enabled
-		if options.TrimBorders {
-			trimmedPath := filepath.Join(tempDir, fmt.Sprintf("page_%04d_trimmed.png", pageNum))
-			if err := o.trimScreenshot(screenshotPath, trimmedPath, options.Verbose); err != nil {
-				if options.Verbose {
-					fmt.Printf("\nWarning: Failed to trim page %d: %v\n", pageNum, err)
-				}
-				// Use original screenshot if trimming fails
-				screenshots = append(screenshots, screenshotPath)
-			} else {
-				// Use trimmed screenshot
-				screenshots = append(screenshots, trimmedPath)
-				// Remove original to save space
-				os.Remove(screenshotPath)
-			}
-		} else {
-			screenshots = append(screenshots, screenshotPath)
+		// Calculate margins for this page (for detection mode or analysis)
+		margins, err := imageprocessing.CalculateTrimMarginsFromFile(screenshotPath)
+		if err != nil && options.Verbose {
+			fmt.Printf("\nWarning: Failed to calculate margins for page %d: %v\n", pageNum, err)
 		}
+		allMargins = append(allMargins, margins)
 
-		// Check if there are more pages by comparing with previous screenshots
-		// If the last 5 pages are all identical, we've reached the end
-		// (This handles books with blank pages at the end)
+		// Store screenshot path (trimming will be done in batch before PDF generation)
+		screenshots = append(screenshots, screenshotPath)
+
+		// Check for end of book (last 5 pages identical)
 		if len(screenshots) >= 5 {
 			// Always show debug info for end detection
 			fmt.Printf("\n[DEBUG] End detection check: total screenshots = %d\n", len(screenshots))
@@ -334,10 +411,14 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 			if allIdentical {
 				// Last 5 pages are identical - we've reached the end
 				// These are the rating/review screens, not actual book content
-				// Remove the last 5 pages from screenshots
+				// Remove the last 5 pages from screenshots AND margins
 				fmt.Printf("\n\nReached end of book (last 5 pages are identical)\n")
-				fmt.Printf("Removing last 5 pages (rating screens) from PDF\n")
+				fmt.Printf("Removing last 5 pages (rating screens) from PDF and margin analysis\n")
 				screenshots = screenshots[:len(screenshots)-5]
+				// Also remove from margin analysis to prevent gray backgrounds from affecting detection
+				if len(allMargins) >= 5 {
+					allMargins = allMargins[:len(allMargins)-5]
+				}
 				break
 			} else {
 				fmt.Printf("[DEBUG] Not all identical, continuing...\n")
@@ -349,7 +430,8 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 			return o.automation.TurnNextPage(direction)
 		})
 		if err != nil {
-			return pageNum, screenshots, fmt.Errorf("failed to turn page after retries: %w", err)
+			aggregatedMargins := imageprocessing.AggregateMinimumMargins(allMargins)
+			return pageNum, screenshots, aggregatedMargins, allMargins, fmt.Errorf("failed to turn page after retries: %w", err)
 		}
 
 		// Wait for page delay
@@ -361,10 +443,13 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 	fmt.Println() // New line after progress
 
 	if pageNum > maxPages {
-		return pageNum - 1, screenshots, fmt.Errorf("reached maximum page limit (%d)", maxPages)
+		aggregatedMargins := imageprocessing.AggregateMinimumMargins(allMargins)
+		return pageNum - 1, screenshots, aggregatedMargins, allMargins, fmt.Errorf("reached maximum page limit (%d)", maxPages)
 	}
 
-	return pageNum, screenshots, nil
+	// Aggregate all margins and return
+	aggregatedMargins := imageprocessing.AggregateMinimumMargins(allMargins)
+	return pageNum, screenshots, aggregatedMargins, allMargins, nil
 }
 
 // showCountdown displays a countdown timer

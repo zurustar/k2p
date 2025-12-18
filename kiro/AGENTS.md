@@ -1,5 +1,46 @@
 # Development Guidelines
 
+## Documentation Update Rules
+
+### **MANDATORY: Update Documentation Before Implementation**
+
+When implementing any new feature or making significant changes:
+
+1. **ALWAYS update `docs/design.md` FIRST**
+   - Add or modify relevant sections (Components, Data Models, Workflow, etc.)
+   - Update interfaces if they change
+   - Document new correctness properties if applicable
+   - Keep the design document in sync with implementation
+
+2. **ALWAYS update `docs/tasks.md` DURING implementation**
+   - Add new tasks/phases for the feature
+   - Mark tasks as `[x]` when completed
+   - Update "Current Status" section
+   - Keep task list synchronized with actual progress
+
+3. **Order of Operations**
+   ```
+   1. Update docs/design.md (design the change)
+   2. Update docs/tasks.md (plan the tasks)
+   3. Implement the code
+   4. Mark tasks complete in docs/tasks.md
+   5. Verify design.md still matches implementation
+   ```
+
+### Why This Matters
+
+- **Design.md** is the source of truth for architecture and interfaces
+- **Tasks.md** tracks implementation progress and serves as a checklist
+- Updating documentation first ensures thoughtful design before coding
+- Keeping docs in sync prevents drift between design and implementation
+
+### Consequences of Not Following
+
+- ❌ Design document becomes outdated and useless
+- ❌ Task tracking becomes meaningless
+- ❌ Future developers (including AI agents) will be confused
+- ❌ Code reviews become harder without up-to-date design docs
+
 ## Task Management Rules
 
 ### Task Completion Updates

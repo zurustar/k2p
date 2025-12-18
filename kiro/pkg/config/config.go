@@ -36,8 +36,16 @@ type ConversionOptions struct {
 	// Auto-confirm overwrite without prompting
 	AutoConfirm bool `yaml:"auto_confirm"`
 
-	// Trim black/white borders from screenshots
-	TrimBorders bool `yaml:"trim_borders"`
+	// Operation mode: "detect" (analyze margins) or "generate" (create PDF)
+	// Default: "generate"
+	Mode string `yaml:"mode"`
+
+	// Custom trim margins in pixels (default: 0 = no trimming)
+	// Used when Mode == "generate" and all four values > 0
+	TrimTop    int `yaml:"trim_top"`
+	TrimBottom int `yaml:"trim_bottom"`
+	TrimLeft   int `yaml:"trim_left"`
+	TrimRight  int `yaml:"trim_right"`
 
 	// Page turn key: "right" or "left" (default: "right")
 	PageTurnKey string `yaml:"page_turn_key"`
@@ -77,7 +85,11 @@ func (cm *DefaultConfigManager) GetDefaults() *ConversionOptions {
 		PDFQuality:        "high",
 		Verbose:           false,
 		AutoConfirm:       false,
-		TrimBorders:       false,   // Disable by default (opt-in)
+		Mode:              "generate", // Default to PDF generation mode
+		TrimTop:           0,          // No trimming by default
+		TrimBottom:        0,
+		TrimLeft:          0,
+		TrimRight:         0,
 		PageTurnKey:       "right", // Default to right arrow
 	}
 }
@@ -138,6 +150,16 @@ func (cm *DefaultConfigManager) validateOptions(opts *ConversionOptions) error {
 		return fmt.Errorf("startup delay cannot be negative")
 	}
 
+	// Validate mode
+	if opts.Mode != "" && opts.Mode != "detect" && opts.Mode != "generate" {
+		return fmt.Errorf("mode must be 'detect' or 'generate', got: %s", opts.Mode)
+	}
+
+	// Validate trim margins
+	if opts.TrimTop < 0 || opts.TrimBottom < 0 || opts.TrimLeft < 0 || opts.TrimRight < 0 {
+		return fmt.Errorf("trim margins cannot be negative")
+	}
+
 	return nil
 }
 
@@ -167,7 +189,21 @@ func (cm *DefaultConfigManager) MergeOptions(cliOptions, fileOptions *Conversion
 		merged.ShowCountdown = fileOptions.ShowCountdown
 		merged.Verbose = fileOptions.Verbose
 		merged.AutoConfirm = fileOptions.AutoConfirm
-		merged.TrimBorders = fileOptions.TrimBorders
+		if fileOptions.Mode != "" {
+			merged.Mode = fileOptions.Mode
+		}
+		if fileOptions.TrimTop != 0 {
+			merged.TrimTop = fileOptions.TrimTop
+		}
+		if fileOptions.TrimBottom != 0 {
+			merged.TrimBottom = fileOptions.TrimBottom
+		}
+		if fileOptions.TrimLeft != 0 {
+			merged.TrimLeft = fileOptions.TrimLeft
+		}
+		if fileOptions.TrimRight != 0 {
+			merged.TrimRight = fileOptions.TrimRight
+		}
 		if fileOptions.PageTurnKey != "" {
 			merged.PageTurnKey = fileOptions.PageTurnKey
 		}
@@ -196,8 +232,20 @@ func (cm *DefaultConfigManager) MergeOptions(cliOptions, fileOptions *Conversion
 		if cliOptions.AutoConfirm {
 			merged.AutoConfirm = true
 		}
-		if cliOptions.TrimBorders {
-			merged.TrimBorders = true
+		if cliOptions.Mode != "" {
+			merged.Mode = cliOptions.Mode
+		}
+		if cliOptions.TrimTop != 0 {
+			merged.TrimTop = cliOptions.TrimTop
+		}
+		if cliOptions.TrimBottom != 0 {
+			merged.TrimBottom = cliOptions.TrimBottom
+		}
+		if cliOptions.TrimLeft != 0 {
+			merged.TrimLeft = cliOptions.TrimLeft
+		}
+		if cliOptions.TrimRight != 0 {
+			merged.TrimRight = cliOptions.TrimRight
 		}
 		if cliOptions.PageTurnKey != "" {
 			merged.PageTurnKey = cliOptions.PageTurnKey

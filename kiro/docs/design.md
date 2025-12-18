@@ -209,8 +209,18 @@ type ConversionOptions struct {
     // Auto-confirm overwrite without prompting
     AutoConfirm bool
 
-    // Trim borders from captured pages (opt-in)
-    TrimBorders bool
+    // Operation mode: "detect" (analyze margins) or "generate" (create PDF)
+    // Default: "generate"
+    Mode string
+
+    // Custom trim margins in pixels (default: 0 = no trimming)
+    // Trimming is applied if any value is non-zero
+    // 0 means no trimming for that specific edge
+    // Example: TrimLeft=30, TrimRight=30, TrimTop=0, TrimBottom=0 trims only left/right
+    TrimTop    int
+    TrimBottom int
+    TrimLeft   int
+    TrimRight  int
 
     // Page turn key: "right" or "left" (auto-detects unless forced to left)
     PageTurnKey string

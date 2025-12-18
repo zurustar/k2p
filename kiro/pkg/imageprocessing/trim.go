@@ -294,3 +294,130 @@ func TrimImageFile(inputPath, outputPath string) error {
 
 	return nil
 }
+
+// TrimMargins represents the removable margins on each edge of an image
+type TrimMargins struct {
+	Top    int
+	Bottom int
+	Left   int
+	Right  int
+}
+
+// CalculateTrimMargins analyzes an image and returns the removable margin size for each edge
+func CalculateTrimMargins(img image.Image) TrimMargins {
+	bounds := findContentBounds(img)
+	originalBounds := img.Bounds()
+
+	return TrimMargins{
+		Top:    bounds.Min.Y - originalBounds.Min.Y,
+		Bottom: originalBounds.Max.Y - bounds.Max.Y,
+		Left:   bounds.Min.X - originalBounds.Min.X,
+		Right:  originalBounds.Max.X - bounds.Max.X,
+	}
+}
+
+// CalculateTrimMarginsFromFile analyzes an image file and returns the removable margins
+func CalculateTrimMarginsFromFile(imagePath string) (TrimMargins, error) {
+	file, err := os.Open(imagePath)
+	if err != nil {
+		return TrimMargins{}, fmt.Errorf("failed to open image file: %w", err)
+	}
+	defer file.Close()
+
+	img, err := png.Decode(file)
+	if err != nil {
+		return TrimMargins{}, fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	return CalculateTrimMargins(img), nil
+}
+
+// AggregateMinimumMargins takes margins from multiple pages and returns the minimum safe values
+// The minimum values ensure we don't accidentally trim actual book content
+func AggregateMinimumMargins(margins []TrimMargins) TrimMargins {
+	if len(margins) == 0 {
+		return TrimMargins{}
+	}
+
+	// Start with the first margin as the minimum
+	minMargins := margins[0]
+
+	// Find the minimum for each edge
+	for i := 1; i < len(margins); i++ {
+		if margins[i].Top < minMargins.Top {
+			minMargins.Top = margins[i].Top
+		}
+		if margins[i].Bottom < minMargins.Bottom {
+			minMargins.Bottom = margins[i].Bottom
+		}
+		if margins[i].Left < minMargins.Left {
+			minMargins.Left = margins[i].Left
+		}
+		if margins[i].Right < minMargins.Right {
+			minMargins.Right = margins[i].Right
+		}
+	}
+
+	return minMargins
+}
+
+// TrimWithCustomMargins trims an image using specific pixel margins for each edge
+func TrimWithCustomMargins(img image.Image, top, bottom, left, right int) image.Image {
+	bounds := img.Bounds()
+
+	// Calculate new bounds
+	newMinX := bounds.Min.X + left
+	newMinY := bounds.Min.Y + top
+	newMaxX := bounds.Max.X - right
+	newMaxY := bounds.Max.Y - bottom
+
+	// Validate bounds
+	if newMinX >= newMaxX || newMinY >= newMaxY {
+		// Invalid trim would result in empty or negative image, return original
+		return img
+	}
+
+	// Create trimmed image
+	trimmedBounds := image.Rect(0, 0, newMaxX-newMinX, newMaxY-newMinY)
+	trimmed := image.NewRGBA(trimmedBounds)
+
+	for y := newMinY; y < newMaxY; y++ {
+		for x := newMinX; x < newMaxX; x++ {
+			trimmed.Set(x-newMinX, y-newMinY, img.At(x, y))
+		}
+	}
+
+	return trimmed
+}
+
+// TrimImageFileWithCustomMargins trims an image file using custom margins and saves the result
+func TrimImageFileWithCustomMargins(inputPath, outputPath string, top, bottom, left, right int) error {
+	// Open input file
+	file, err := os.Open(inputPath)
+	if err != nil {
+		return fmt.Errorf("failed to open input file: %w", err)
+	}
+	defer file.Close()
+
+	// Decode image
+	img, err := png.Decode(file)
+	if err != nil {
+		return fmt.Errorf("failed to decode image: %w", err)
+	}
+
+	// Trim with custom margins
+	trimmed := TrimWithCustomMargins(img, top, bottom, left, right)
+
+	// Save trimmed image
+	outFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer outFile.Close()
+
+	if err := png.Encode(outFile, trimmed); err != nil {
+		return fmt.Errorf("failed to encode image: %w", err)
+	}
+
+	return nil
+}

@@ -3,7 +3,7 @@
 This document tracks the implementation progress of the Kindle to PDF converter.
 
 ## Current Status
-**Phase**: Phase 8 completed + Image Trimming Feature
+**Phase**: Phase 8 completed + Enhanced Trimming Feature (Margin Detection & Custom Trimming)
 **Next Steps**: Ready for real-world testing with Kindle app
 
 ## Phase 1: Project Setup and Foundation
@@ -116,6 +116,18 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Detection images remain untrimmed for reliability
   - [x] Comprehensive unit tests
   - [x] Based on gazounomawarinoiranaifuchiwokesu implementation
+
+- [x] Enhanced trimming: Margin detection and custom trimming
+  - [x] Two-mode operation: detect and generate
+  - [x] Margin detection mode: analyze all pages without PDF output
+  - [x] Calculate minimum safe margins across all pages
+  - [x] Custom trim margins: specify top, bottom, left, right pixels
+  - [x] Replace --trim-borders with --mode and --trim-* flags
+  - [x] Update ConversionOptions with Mode and trim margin fields
+  - [x] Update orchestrator to support both modes
+  - [x] Add margin analysis functions to imageprocessing package
+  - [x] Update CLI help text with trimming workflow documentation
+  - [x] Update design.md and tasks.md
 
 - [x] Screenshot capture improvements
   - [x] Fullscreen Kindle support

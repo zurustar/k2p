@@ -29,7 +29,11 @@ func main() {
 		verboseShort     = flag.Bool("v", false, "Enable verbose logging (shorthand)")
 		autoConfirm      = flag.Bool("auto-confirm", false, "Skip confirmation prompts")
 		autoConfirmShort = flag.Bool("y", false, "Skip confirmation prompts (shorthand)")
-		trimBorders      = flag.Bool("trim-borders", false, "Trim black/white borders from screenshots")
+		mode             = flag.String("mode", "generate", "Operation mode: 'detect' (analyze margins) or 'generate' (create PDF)")
+		trimTop          = flag.Int("trim-top", 0, "Pixels to trim from top edge (0 = no trim)")
+		trimBottom       = flag.Int("trim-bottom", 0, "Pixels to trim from bottom edge (0 = no trim)")
+		trimLeft         = flag.Int("trim-left", 0, "Pixels to trim from left edge (0 = no trim)")
+		trimRight        = flag.Int("trim-right", 0, "Pixels to trim from right edge (0 = no trim)")
 		pageTurnKey      = flag.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
 		showVersion      = flag.Bool("version", false, "Show version information")
 		showHelp         = flag.Bool("help", false, "Show help message")
@@ -68,7 +72,11 @@ func main() {
 		Verbose:     *verbose,
 		AutoConfirm: *autoConfirm,
 		ConfigFile:  *configFile,
-		TrimBorders: *trimBorders, // Opt-in: only trim when explicitly enabled
+		Mode:        *mode,
+		TrimTop:     *trimTop,
+		TrimBottom:  *trimBottom,
+		TrimLeft:    *trimLeft,
+		TrimRight:   *trimRight,
 		PageTurnKey: *pageTurnKey,
 	}
 
@@ -178,8 +186,13 @@ OPTIONS:
     --startup-delay DURATION  Delay before starting automation (default: 3s)
     --pdf-quality LEVEL       PDF quality: low, medium, high (default: high)
     --config FILE             Configuration file path
-    --trim-borders            Enable border trimming (removes black/white borders)
-                              Note: Most effective for fixed-layout books
+    --mode MODE               Operation mode (default: generate)
+                              - detect: Analyze margins, no PDF output
+                              - generate: Create PDF with optional trimming
+    --trim-top PIXELS         Pixels to trim from top (0 = no trim, default: 0)
+    --trim-bottom PIXELS      Pixels to trim from bottom (0 = no trim, default: 0)
+    --trim-left PIXELS        Pixels to trim from left (0 = no trim, default: 0)
+    --trim-right PIXELS       Pixels to trim from right (0 = no trim, default: 0)
     -v, --verbose             Enable verbose logging
     -y, --auto-confirm        Skip confirmation prompts
     --version                 Show version information
@@ -201,8 +214,26 @@ EXAMPLES:
     # Verbose mode with auto-confirm
     k2p -v -y
 
-    # Enable border trimming
-    k2p --trim-borders
+    # Two-step trimming workflow:
+    # Step 1: Detect optimal margins (no PDF output)
+    k2p --mode detect -v
+
+    # Step 2: Generate PDF with detected margins
+    k2p --mode generate --trim-top 50 --trim-bottom 50 --trim-left 30 --trim-right 30
+
+TRIMMING WORKFLOW:
+    Kindle books have consistent app margins, but pages may have varying
+    content margins. Use the two-step workflow for optimal results:
+
+    1. Detection Mode (--mode detect):
+       - Captures all pages and analyzes margins
+       - Reports minimum safe trim values for each edge
+       - Does NOT generate a PDF
+
+    2. Generation Mode (--mode generate):
+       - Creates PDF with optional custom trimming
+       - Specify trim values for edges you want to trim (0 = no trim)
+       - Example: --trim-left 30 --trim-right 30 (trims only left/right)
 
 CONFIGURATION FILE:
     You can create a YAML configuration file to set default options:
@@ -213,7 +244,11 @@ CONFIGURATION FILE:
     startup_delay: 3s
     show_countdown: true
     pdf_quality: high
-    trim_borders: false  # Set to true to enable border trimming
+    mode: generate
+    trim_top: 0
+    trim_bottom: 0
+    trim_left: 0
+    trim_right: 0
     verbose: false
     auto_confirm: false
 

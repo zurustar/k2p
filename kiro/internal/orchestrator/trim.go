@@ -14,3 +14,8 @@ func (o *DefaultOrchestrator) trimScreenshot(inputPath, outputPath string, verbo
 
 	return imageprocessing.TrimImageFile(inputPath, outputPath)
 }
+
+// trimScreenshotWithCustomMargins trims a screenshot using custom pixel margins
+func (o *DefaultOrchestrator) trimScreenshotWithCustomMargins(inputPath, outputPath string, top, bottom, left, right int, verbose bool) error {
+	return imageprocessing.TrimImageFileWithCustomMargins(inputPath, outputPath, top, bottom, left, right)
+}

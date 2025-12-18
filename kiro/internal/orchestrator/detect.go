@@ -78,6 +78,8 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to capture right %d: %w", i, err)
 		}
+		// NOTE: Detection images are NOT trimmed - they're only for comparison
+		// Trimming them would cause false end-of-book detection
 		// Copy to debug directory
 		exec.Command("cp", rightPath, rightDebugPath).Run()
 		if options.Verbose {
@@ -155,6 +157,8 @@ func (o *DefaultOrchestrator) detectPageTurnDirection(ctx context.Context, tempD
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to capture left %d: %w", i, err)
 		}
+		// NOTE: Detection images are NOT trimmed - they're only for comparison
+		// Trimming them would cause false end-of-book detection
 		// Copy to debug directory
 		exec.Command("cp", leftPath, leftDebugPath).Run()
 		if options.Verbose {
