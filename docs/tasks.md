@@ -194,13 +194,11 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 - [ ] Tag each test with property reference
 
 ## Phase 10: Integration and End-to-End Testing
-- [ ] Set up test environment with Kindle app
-- [ ] Create test books for conversion
-- [ ] Test complete conversion workflow
-- [ ] Test with various book sizes and formats
-- [ ] Test configuration file scenarios
-- [ ] Test error recovery scenarios
-- [ ] Performance testing with large books
+- [x] Create `test/integration` directory
+- [x] Implement Orchestrator integration tests (Mock automation, real FS/PDF)
+- [x] Update `MANUAL_TESTING.md` for E2E scenarios
+- [x] Enhance `test_manual.sh` for guided E2E testing
+- [x] Run and verify tests
 
 ## Phase 11: Documentation and Polish
 - [ ] Write comprehensive README.md

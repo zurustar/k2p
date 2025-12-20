@@ -12,6 +12,10 @@ When implementing any new feature or making significant changes:
 
 **YOU MUST FOLLOW THIS ORDER:**
 
+0. **Check Git Workflow**
+   - Read `.agent/workflows/git-flow.md` to ensure you are on the correct branch.
+   - Run `git status` to verify your environment.
+
 1. **Update docs/design.md FIRST** (if design changes are needed)
    - Add or modify relevant sections (Components, Data Models, Workflow, etc.)
    - Update interfaces if they change

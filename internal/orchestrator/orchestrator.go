@@ -58,6 +58,22 @@ func NewOrchestrator() ConversionOrchestrator {
 	}
 }
 
+// NewOrchestratorWithDeps creates a new orchestrator with injected dependencies
+// This is primarily used for testing and custom setups
+func NewOrchestratorWithDeps(
+	auto automation.KindleAutomation,
+	fm filemanager.FileManager,
+	pg pdf.PDFGenerator,
+	cap screenshot.Capturer,
+) ConversionOrchestrator {
+	return &DefaultOrchestrator{
+		automation:  auto,
+		fileManager: fm,
+		pdfGen:      pg,
+		capturer:    cap,
+	}
+}
+
 // ConvertCurrentBook implements the main conversion workflow
 func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *config.ConversionOptions) (*ConversionResult, error) {
 	startTime := time.Now()

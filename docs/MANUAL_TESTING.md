@@ -86,8 +86,34 @@ make build
    ```bash
    # 変換開始後、数ページでCtrl+C
    # → 一時ファイルがクリーンアップされることを確認
-   ls /tmp/k2p-* 2>/dev/null  # 何も表示されないはず
+#### Test 4: Full Conversion E2E (Golden Path)
+
+1. **準備**
+   - 30〜50ページ程度の中規模な本を用意
+   - Macの「おやすみモード」をオン（通知による妨害防止）
+
+2. **実行**
+   ```bash
+   ./build/k2p --auto-confirm --verbose --trim-borders --page-delay 600ms -o ~/Desktop/test4_full
    ```
+
+3. **確認**
+   - 完了までエラーなく進むか
+   - ページ抜けがないか（特にチャプターの区切りなど）
+   - レーティング画面（最後のページ）が適切に検出・削除されているか
+
+#### Test 5: Error Recovery
+
+1. **アプリ切り替え**
+   - 変換中に `Command+Tab` で別のアプリ（Finderなど）に切り替える
+   - エラーで停止するか、またはKindleに戻すと再開するか確認
+   - 期待動作: `CaptureFrontmostWindow`使用時は、Kindleが前面にないとエラーになるか、最前面の別ウィンドウを撮ってしまう。
+   - 注意: 本ツールは「ユーザーが触らない」ことを前提としていますが、誤って触れた場合の挙動を知っておくことは重要です。
+
+2. **Kindle強制終了**
+   - 変換中にKindleを `Command+Q` で終了
+   - ツールが「Kindle not running」または「Capture failed」で適切にエラー終了するか確認
+
 
 ## チェックリスト
 

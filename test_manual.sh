@@ -60,10 +60,39 @@ fi
 echo ""
 read -p "Press Enter to continue to Test 2..."
 
-# Test 2: Without border trimming
+# Test 2: Full E2E (Golden Path)
 echo ""
 echo "=================================="
-echo "Test 2: Default (No Trimming)"
+echo "Test 2: Full E2E (Golden Path)"
+echo "=================================="
+echo ""
+echo "This test mimics a real world scenario:"
+echo "  - Auto-confirm enabled"
+echo "  - Custom trimming (simulated or real)"
+echo "  - High quality check"
+echo ""
+echo "Please:"
+echo "  1. Reset book to page 1"
+echo ""
+read -p "Press Enter when ready for Test 2..."
+
+./build/k2p --auto-confirm --verbose --trim-borders --page-delay 600ms -o "$TEST_DIR/test2_golden_path"
+
+if [ $? -eq 0 ]; then
+    echo "✅ Test 2 completed"
+    echo "📄 Check the PDF: $TEST_DIR/test2_golden_path/"
+    ls -lh "$TEST_DIR/test2_golden_path/"*.pdf 2>/dev/null
+else
+    echo "❌ Test 2 failed"
+fi
+
+echo ""
+read -p "Press Enter to continue to Test 3..."
+
+# Test 3: Without border trimming
+echo ""
+echo "=================================="
+echo "Test 3: Default (No Trimming)"
 echo "=================================="
 echo ""
 echo "Please:"
@@ -72,14 +101,14 @@ echo "  2. Re-open the same book to the first page"
 echo ""
 read -p "Press Enter when ready for Test 2..."
 
-./build/k2p --verbose -o "$TEST_DIR/test2_no_trim"
+./build/k2p --verbose -o "$TEST_DIR/test3_no_trim"
 
 if [ $? -eq 0 ]; then
-    echo "✅ Test 2 completed"
-    echo "📄 Check the PDF: $TEST_DIR/test2_no_trim/"
-    ls -lh "$TEST_DIR/test2_no_trim/"*.pdf 2>/dev/null
+    echo "✅ Test 3 completed"
+    echo "📄 Check the PDF: $TEST_DIR/test3_no_trim/"
+    ls -lh "$TEST_DIR/test3_no_trim/"*.pdf 2>/dev/null
 else
-    echo "❌ Test 2 failed"
+    echo "❌ Test 3 failed"
 fi
 
 echo ""
@@ -90,10 +119,10 @@ echo ""
 echo "All test outputs are in: $TEST_DIR"
 echo ""
 echo "Please verify:"
-echo "  1. Open both PDFs and compare them"
+echo "  1. Open PDFs and compare them"
 echo "  2. Check if Test 1 (--trim-borders) has borders removed"
-echo "  3. Check if Test 2 (default) has borders intact"
-echo "  4. Verify all pages are captured correctly"
+echo "  3. Check if Test 2 (Golden Path) was smooth"
+echo "  4. Check if Test 3 (default) has borders intact"
 echo ""
 echo "To open the test directory:"
 echo "  open $TEST_DIR"
@@ -107,6 +136,5 @@ echo "✅ Manual testing complete!"
 echo ""
 echo "Next steps:"
 echo "  - Review the generated PDFs"
-echo "  - Compare trimmed vs non-trimmed versions"
 echo "  - Report any issues found"
 echo ""
