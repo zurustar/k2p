@@ -1,0 +1,9 @@
+output_dir: ~/Documents/Kindle-PDFs
+screenshot_quality: 95
+page_delay: 500ms
+startup_delay: 3s
+show_countdown: true
+pdf_quality: high
+trim_borders: false
+verbose: false
+auto_confirm: false
