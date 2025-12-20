@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -211,7 +212,26 @@ func (fm *DefaultFileManager) CleanupTempDir(dir string) error {
 	}
 
 	// Safety check: ensure it's a temp directory
-	if !filepath.HasPrefix(dir, os.TempDir()) {
+	// Use explicit path prefix check
+	cleanDir := filepath.Clean(dir)
+	cleanTemp := filepath.Clean(os.TempDir())
+
+	if !filepath.IsAbs(cleanDir) {
+		absDir, err := filepath.Abs(cleanDir)
+		if err == nil {
+			cleanDir = absDir
+		}
+	}
+	if !filepath.IsAbs(cleanTemp) {
+		absTemp, err := filepath.Abs(cleanTemp)
+		if err == nil {
+			cleanTemp = absTemp
+		}
+	}
+
+	// Simple prefix check isn't enough (e.g. /tmp/foo vs /tmp), need separator check
+	rel, err := filepath.Rel(cleanTemp, cleanDir)
+	if err != nil || strings.HasPrefix(rel, "..") {
 		return fmt.Errorf("refusing to delete non-temporary directory: %s", dir)
 	}
 

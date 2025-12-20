@@ -3,6 +3,7 @@ package filemanager
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -78,7 +79,7 @@ func TestCreateTempDir(t *testing.T) {
 	}
 
 	// Verify it's in temp directory
-	if !filepath.HasPrefix(dir, os.TempDir()) {
+	if !strings.HasPrefix(dir, os.TempDir()) {
 		t.Errorf("temp directory not in system temp: %s", dir)
 	}
 }
@@ -147,7 +148,7 @@ func TestResolveOutputPath(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
-		if !filepath.HasPrefix(path, os.TempDir()) {
+		if !strings.HasPrefix(path, os.TempDir()) {
 			t.Errorf("expected path in temp directory, got: %s", path)
 		}
 		if filepath.Ext(path) != ".pdf" {

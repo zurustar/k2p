@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 
@@ -16,42 +17,54 @@ const version = "0.1.0-debug-20251216"
 var buildTime = "unknown" // Set via -ldflags during build
 
 func main() {
-	// Define CLI flags
+	exitCode := run(os.Args[1:], os.Stdout, os.Stderr, orchestrator.NewOrchestrator())
+	os.Exit(exitCode)
+}
+
+func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOrchestrator) int {
+	// Define CLI flags using a specific FlagSet
+	fs := flag.NewFlagSet("k2p", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+
 	var (
-		outputDir        = flag.String("output", "", "Output directory (default: current directory)")
-		outputShort      = flag.String("o", "", "Output directory (shorthand)")
-		quality          = flag.Int("quality", 0, "Screenshot quality 1-100 (default: 95)")
-		pageDelay        = flag.Duration("page-delay", 0, "Delay between page turns (default: 500ms)")
-		startupDelay     = flag.Duration("startup-delay", 0, "Delay before starting automation (default: 3s)")
-		pdfQuality       = flag.String("pdf-quality", "", "PDF quality: low, medium, high (default: high)")
-		verbose          = flag.Bool("verbose", false, "Enable verbose logging")
-		verboseShort     = flag.Bool("v", false, "Enable verbose logging (shorthand)")
-		autoConfirm      = flag.Bool("auto-confirm", false, "Skip confirmation prompts")
-		autoConfirmShort = flag.Bool("y", false, "Skip confirmation prompts (shorthand)")
-		mode             = flag.String("mode", "generate", "Operation mode: 'detect' (analyze margins) or 'generate' (create PDF)")
-		trimTop          = flag.Int("trim-top", 0, "Pixels to trim from top edge (0 = no trim)")
-		trimBottom       = flag.Int("trim-bottom", 0, "Pixels to trim from bottom edge (0 = no trim)")
-		trimLeft         = flag.Int("trim-left", 0, "Pixels to trim from left edge (0 = no trim)")
-		trimRight        = flag.Int("trim-right", 0, "Pixels to trim from right edge (0 = no trim)")
-		pageTurnKey      = flag.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
-		showVersion      = flag.Bool("version", false, "Show version information")
-		showHelp         = flag.Bool("help", false, "Show help message")
-		showHelpShort    = flag.Bool("h", false, "Show help message (shorthand)")
+		outputDir        = fs.String("output", "", "Output directory (default: current directory)")
+		outputShort      = fs.String("o", "", "Output directory (shorthand)")
+		quality          = fs.Int("quality", 0, "Screenshot quality 1-100 (default: 95)")
+		pageDelay        = fs.Duration("page-delay", 0, "Delay between page turns (default: 500ms)")
+		startupDelay     = fs.Duration("startup-delay", 0, "Delay before starting automation (default: 3s)")
+		pdfQuality       = fs.String("pdf-quality", "", "PDF quality: low, medium, high (default: high)")
+		verbose          = fs.Bool("verbose", false, "Enable verbose logging")
+		verboseShort     = fs.Bool("v", false, "Enable verbose logging (shorthand)")
+		autoConfirm      = fs.Bool("auto-confirm", false, "Skip confirmation prompts")
+		autoConfirmShort = fs.Bool("y", false, "Skip confirmation prompts (shorthand)")
+		mode             = fs.String("mode", "generate", "Operation mode: 'detect' (analyze margins) or 'generate' (create PDF)")
+		trimTop          = fs.Int("trim-top", 0, "Pixels to trim from top edge (0 = no trim)")
+		trimBottom       = fs.Int("trim-bottom", 0, "Pixels to trim from bottom edge (0 = no trim)")
+		trimLeft         = fs.Int("trim-left", 0, "Pixels to trim from left edge (0 = no trim)")
+		trimRight        = fs.Int("trim-right", 0, "Pixels to trim from right edge (0 = no trim)")
+		pageTurnKey      = fs.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
+		showVersion      = fs.Bool("version", false, "Show version information")
+		showHelp         = fs.Bool("help", false, "Show help message")
+		showHelpShort    = fs.Bool("h", false, "Show help message (shorthand)")
 	)
 
-	flag.Parse()
+	// Parse flags
+	if err := fs.Parse(args); err != nil {
+		// Flag parsing error (already printed by fs)
+		return 1 // or 2 per convention? Go flags usually output and return error.
+	}
 
 	// Handle version flag
 	if *showVersion {
-		fmt.Printf("k2p version %s\n", version)
-		fmt.Printf("Built: %s\n", buildTime)
-		return
+		fmt.Fprintf(stdout, "k2p version %s\n", version)
+		fmt.Fprintf(stdout, "Built: %s\n", buildTime)
+		return 0
 	}
 
 	// Handle help flag
 	if *showHelp || *showHelpShort {
-		printHelp()
-		return
+		printHelp(stdout)
+		return 0
 	}
 
 	// Merge shorthand flags
@@ -96,25 +109,22 @@ func main() {
 
 	// Validate final options
 	if finalOpts.ScreenshotQuality < 1 || finalOpts.ScreenshotQuality > 100 {
-		fmt.Fprintf(os.Stderr, "Error: screenshot quality must be between 1 and 100\n")
-		os.Exit(1)
+		fmt.Fprintf(stderr, "Error: screenshot quality must be between 1 and 100\n")
+		return 1
 	}
 
 	validPDFQualities := map[string]bool{"low": true, "medium": true, "high": true}
 	if !validPDFQualities[finalOpts.PDFQuality] {
-		fmt.Fprintf(os.Stderr, "Error: pdf quality must be 'low', 'medium', or 'high'\n")
-		os.Exit(1)
+		fmt.Fprintf(stderr, "Error: pdf quality must be 'low', 'medium', or 'high'\n")
+		return 1
 	}
-
-	// Create orchestrator
-	orch := orchestrator.NewOrchestrator()
 
 	// Set up signal handling for graceful shutdown
 	ctx := context.Background()
 	var tempDirToCleanup string
 	ctx = orchestrator.SetupSignalHandler(ctx, func() {
 		if tempDirToCleanup != "" {
-			fmt.Println("Cleaning up temporary files...")
+			fmt.Fprintf(stdout, "Cleaning up temporary files...\n")
 			// Best effort cleanup
 			os.RemoveAll(tempDirToCleanup)
 		}
@@ -122,8 +132,8 @@ func main() {
 
 	// Display version before conversion
 	if finalOpts.Verbose {
-		fmt.Printf("k2p version: %s\n", version)
-		fmt.Printf("Built: %s\n\n", buildTime)
+		fmt.Fprintf(stdout, "k2p version: %s\n", version)
+		fmt.Fprintf(stdout, "Built: %s\n\n", buildTime)
 	}
 
 	// Run conversion
@@ -131,26 +141,26 @@ func main() {
 	if err != nil {
 		// Play error sound to alert user (useful when Kindle is fullscreen)
 		exec.Command("afplay", "/System/Library/Sounds/Basso.aiff").Start()
-		fmt.Fprintf(os.Stderr, "\nError: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "\nError: %v\n", err)
+		return 1
 	}
 
 	// Success
 	if len(result.Warnings) > 0 {
-		fmt.Println("\nWarnings:")
+		fmt.Fprintf(stdout, "\nWarnings:\n")
 		for _, warning := range result.Warnings {
-			fmt.Printf("  - %s\n", warning)
+			fmt.Fprintf(stdout, "  - %s\n", warning)
 		}
 	}
 
 	// Display build time
-	fmt.Printf("Binary built: %s\n", buildTime)
+	fmt.Fprintf(stdout, "Binary built: %s\n", buildTime)
 
-	os.Exit(0)
+	return 0
 }
 
-func printHelp() {
-	fmt.Printf(`k2p - Kindle to PDF Converter v%s
+func printHelp(w io.Writer) {
+	fmt.Fprintf(w, `k2p - Kindle to PDF Converter v%s
 
 USAGE:
     k2p [OPTIONS]
