@@ -111,6 +111,7 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Ensure similarity comparison logs only show with --verbose
   - [x] Keep important user-facing messages (end-of-book detection result) always visible
 
+
 ## Maintenance
 - [x] Investigate and remove unused code
   - [x] Run static analysis (Completed via manual check)
