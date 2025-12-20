@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/oumi/k2p/internal/config"
 	"github.com/oumi/k2p/internal/orchestrator"
-	"github.com/oumi/k2p/pkg/config"
 )
 
 const version = "0.1.0-debug-20251216"
@@ -24,7 +24,6 @@ func main() {
 		pageDelay        = flag.Duration("page-delay", 0, "Delay between page turns (default: 500ms)")
 		startupDelay     = flag.Duration("startup-delay", 0, "Delay before starting automation (default: 3s)")
 		pdfQuality       = flag.String("pdf-quality", "", "PDF quality: low, medium, high (default: high)")
-		configFile       = flag.String("config", "", "Configuration file path")
 		verbose          = flag.Bool("verbose", false, "Enable verbose logging")
 		verboseShort     = flag.Bool("v", false, "Enable verbose logging (shorthand)")
 		autoConfirm      = flag.Bool("auto-confirm", false, "Skip confirmation prompts")
@@ -71,7 +70,6 @@ func main() {
 		OutputDir:   *outputDir,
 		Verbose:     *verbose,
 		AutoConfirm: *autoConfirm,
-		ConfigFile:  *configFile,
 		Mode:        *mode,
 		TrimTop:     *trimTop,
 		TrimBottom:  *trimBottom,
@@ -93,21 +91,8 @@ func main() {
 		cliOpts.PDFQuality = *pdfQuality
 	}
 
-	// Load config file if specified
-	var fileOpts *config.ConversionOptions
-	if *configFile != "" {
-		cm := config.NewConfigManager()
-		var err error
-		fileOpts, err = cm.LoadConfig(*configFile)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading config file: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	// Merge options
-	cm := config.NewConfigManager()
-	finalOpts := cm.MergeOptions(cliOpts, fileOpts)
+	// Apply defaults and merge CLI options
+	finalOpts := config.ApplyDefaults(cliOpts)
 
 	// Validate final options
 	if finalOpts.ScreenshotQuality < 1 || finalOpts.ScreenshotQuality > 100 {
@@ -185,7 +170,6 @@ OPTIONS:
     --page-delay DURATION     Delay between page turns (default: 500ms)
     --startup-delay DURATION  Delay before starting automation (default: 3s)
     --pdf-quality LEVEL       PDF quality: low, medium, high (default: high)
-    --config FILE             Configuration file path
     --mode MODE               Operation mode (default: generate)
                               - detect: Analyze margins, no PDF output
                               - generate: Create PDF with optional trimming
@@ -207,9 +191,6 @@ EXAMPLES:
 
     # High quality conversion with custom delays
     k2p --quality 100 --page-delay 1s --pdf-quality high
-
-    # Use configuration file
-    k2p --config config.yaml
 
     # Verbose mode with auto-confirm
     k2p -v -y
@@ -235,24 +216,6 @@ TRIMMING WORKFLOW:
        - Specify trim values for edges you want to trim (0 = no trim)
        - Example: --trim-left 30 --trim-right 30 (trims only left/right)
 
-CONFIGURATION FILE:
-    You can create a YAML configuration file to set default options:
-
-    output_dir: ~/Documents/Kindle-PDFs
-    screenshot_quality: 95
-    page_delay: 500ms
-    startup_delay: 3s
-    show_countdown: true
-    pdf_quality: high
-    mode: generate
-    trim_top: 0
-    trim_bottom: 0
-    trim_left: 0
-    trim_right: 0
-    verbose: false
-    auto_confirm: false
-
-    See config.example.yaml for a complete example.
 
 TROUBLESHOOTING:
     "Kindle app is not installed"

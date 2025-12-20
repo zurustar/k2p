@@ -47,7 +47,7 @@ echo "  - Default quality settings"
 echo ""
 read -p "Press Enter to start Test 1..."
 
-./build/k2p --trim-borders --verbose -o "$TEST_DIR/test1_basic"
+./build/k2p --mode generate --trim-top 50 --trim-bottom 50 --verbose -o "$TEST_DIR/test1_basic"
 
 if [ $? -eq 0 ]; then
     echo "✅ Test 1 completed"

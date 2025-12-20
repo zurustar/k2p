@@ -105,6 +105,36 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 - [x] Implement retry logic for transient failures
 - [ ] Test all error scenarios
 
+## Bug Fixes
+- [x] Verbose logging: Fix debug messages appearing without --verbose flag
+  - [x] Wrap end-of-book detection debug output in verbose checks
+  - [x] Ensure similarity comparison logs only show with --verbose
+  - [x] Keep important user-facing messages (end-of-book detection result) always visible
+
+## Maintenance
+- [x] Investigate and remove unused code
+  - [x] Run static analysis (Completed via manual check)
+  - [x] Check for unused exported functions (Completed via manual check)
+  - [x] Check for unused constants (Completed via manual check)
+  - [x] Remove `pkg/automation` unused methods
+  - [x] Remove `internal/orchestrator` unused trim functionality
+  - [x] Remove `pkg/imageprocessing` unused trim logic
+  - [x] Clean up `config.example.yaml`
+  - [x] Update `test_manual.sh`
+
+## Refactoring
+- [x] Remove configuration file support
+  - [x] Remove `config.example.yaml`
+  - [x] Update `cmd/k2p/main.go` (remove flag)
+  - [x] Update `pkg/config` (remove loader)
+  - [x] Update documentation (README)
+- [x] Move `pkg/*` to `internal/*`
+  - [x] Move directories
+  - [x] Update imports
+  - [x] Update documentation
+
+
+
 ## Additional Features
 - [x] Image trimming: Automatic border removal
   - [x] Detect black/white borders from corners

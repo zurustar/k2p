@@ -1,40 +1,48 @@
+---
+description: Workflow to follow before starting any implementation work
+---
+
 # Development Guidelines
 
-## Documentation Update Rules
-
-### **MANDATORY: Update Documentation Before Implementation**
+## **MANDATORY: Update Documentation Before Implementation**
 
 When implementing any new feature or making significant changes:
 
-1. **ALWAYS update `docs/design.md` FIRST**
+### Order of Operations
+
+**YOU MUST FOLLOW THIS ORDER:**
+
+1. **Update docs/design.md FIRST** (if design changes are needed)
    - Add or modify relevant sections (Components, Data Models, Workflow, etc.)
    - Update interfaces if they change
    - Document new correctness properties if applicable
    - Keep the design document in sync with implementation
 
-2. **ALWAYS update `docs/tasks.md` DURING implementation**
-   - Add new tasks/phases for the feature
-   - Mark tasks as `[x]` when completed
-   - Update "Current Status" section
+2. **Update docs/tasks.md BEFORE implementing**
+   - Add new tasks/phases for the feature or bug fix
+   - Place them in the appropriate section (Bug Fixes, Additional Features, etc.)
+   - Mark tasks as `[ ]` (incomplete) initially
+   - Update "Current Status" section if needed
+
+3. **Implement the code**
+   - Now you can make the actual code changes
+   - Follow the plan from the documentation
+
+4. **Mark tasks complete in docs/tasks.md**
+   - Update tasks to `[x]` when completed
    - Keep task list synchronized with actual progress
 
-3. **Order of Operations**
-   ```
-   1. Update docs/design.md (design the change)
-   2. Update docs/tasks.md (plan the tasks)
-   3. Implement the code
-   4. Mark tasks complete in docs/tasks.md
-   5. Verify design.md still matches implementation
-   ```
+5. **Verify design.md still matches implementation**
+   - Ensure documentation reflects what was actually built
 
-### Why This Matters
+## Why This Matters
 
 - **Design.md** is the source of truth for architecture and interfaces
 - **Tasks.md** tracks implementation progress and serves as a checklist
 - Updating documentation first ensures thoughtful design before coding
 - Keeping docs in sync prevents drift between design and implementation
 
-### Consequences of Not Following
+## Consequences of Not Following
 
 - ❌ Design document becomes outdated and useless
 - ❌ Task tracking becomes meaningless
@@ -70,3 +78,15 @@ This ensures the task tracking document always reflects the current state of the
 - Add comprehensive error handling
 - Include detailed comments for complex logic
 - Keep functions focused and testable
+
+## Quick Reference
+
+**For ANY code change (including bug fixes):**
+1. ✓ Update docs/tasks.md FIRST (add task items)
+2. ✓ Update docs/design.md if needed (design changes)
+3. ✓ Implement the code
+4. ✓ Mark tasks as [x] in docs/tasks.md
+5. ✓ Run `make build` and tests
+6. ✓ Verify docs still match implementation
+
+**NEVER skip documentation updates, even for "small" changes.**

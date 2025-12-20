@@ -8,12 +8,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/oumi/k2p/pkg/automation"
-	"github.com/oumi/k2p/pkg/config"
-	"github.com/oumi/k2p/pkg/filemanager"
-	"github.com/oumi/k2p/pkg/imageprocessing"
-	"github.com/oumi/k2p/pkg/pdf"
-	"github.com/oumi/k2p/pkg/screenshot"
+	"github.com/oumi/k2p/internal/automation"
+	"github.com/oumi/k2p/internal/config"
+	"github.com/oumi/k2p/internal/filemanager"
+	"github.com/oumi/k2p/internal/imageprocessing"
+	"github.com/oumi/k2p/internal/pdf"
+	"github.com/oumi/k2p/internal/screenshot"
 )
 
 // ConversionResult contains the result of a conversion
@@ -382,26 +382,32 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 
 		// Check for end of book (last 5 pages identical)
 		if len(screenshots) >= 5 {
-			// Always show debug info for end detection
-			fmt.Printf("\n[DEBUG] End detection check: total screenshots = %d\n", len(screenshots))
-			fmt.Printf("[DEBUG] Checking last 5 screenshots (indices %d-%d):\n",
-				len(screenshots)-5, len(screenshots)-1)
-			for i := len(screenshots) - 5; i < len(screenshots); i++ {
-				fmt.Printf("[DEBUG]   [%d] %s\n", i, filepath.Base(screenshots[i]))
+			// Show debug info for end detection only in verbose mode
+			if options.Verbose {
+				fmt.Printf("\n[DEBUG] End detection check: total screenshots = %d\n", len(screenshots))
+				fmt.Printf("[DEBUG] Checking last 5 screenshots (indices %d-%d):\n",
+					len(screenshots)-5, len(screenshots)-1)
+				for i := len(screenshots) - 5; i < len(screenshots); i++ {
+					fmt.Printf("[DEBUG]   [%d] %s\n", i, filepath.Base(screenshots[i]))
+				}
 			}
 
 			allIdentical := true
 			for i := len(screenshots) - 4; i < len(screenshots); i++ {
 				similarity, err := imageprocessing.CompareImages(screenshots[i-1], screenshots[i])
 				if err != nil {
-					fmt.Printf("\n[DEBUG] Warning: Failed to compare screenshots for end detection: %v\n", err)
+					if options.Verbose {
+						fmt.Printf("\n[DEBUG] Warning: Failed to compare screenshots for end detection: %v\n", err)
+					}
 					allIdentical = false
 					break
 				}
-				fmt.Printf("[DEBUG] Compare [%d] %s vs [%d] %s: %.2f%% similarity\n",
-					i-1, filepath.Base(screenshots[i-1]),
-					i, filepath.Base(screenshots[i]),
-					similarity*100)
+				if options.Verbose {
+					fmt.Printf("[DEBUG] Compare [%d] %s vs [%d] %s: %.2f%% similarity\n",
+						i-1, filepath.Base(screenshots[i-1]),
+						i, filepath.Base(screenshots[i]),
+						similarity*100)
+				}
 				if similarity < 0.995 { // 99.5% - end-of-book pages are 100% identical
 					allIdentical = false
 					break
@@ -420,7 +426,7 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 					allMargins = allMargins[:len(allMargins)-5]
 				}
 				break
-			} else {
+			} else if options.Verbose {
 				fmt.Printf("[DEBUG] Not all identical, continuing...\n")
 			}
 		}

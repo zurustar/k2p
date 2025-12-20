@@ -13,33 +13,6 @@ const (
 	whiteThreshold = 195
 )
 
-// TrimBorders removes uniform colored borders (black or white) from an image
-// Based on improved implementation from gazounomawarinoiranaifuchiwokesu
-func TrimBorders(img image.Image) image.Image {
-	bounds := findContentBounds(img)
-	if bounds.Empty() {
-		// Image is completely black or empty, return original
-		return img
-	}
-
-	// If bounds match original, no trimming needed
-	if bounds == img.Bounds() {
-		return img
-	}
-
-	// Create trimmed image
-	trimmedBounds := image.Rect(0, 0, bounds.Dx(), bounds.Dy())
-	trimmed := image.NewRGBA(trimmedBounds)
-
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			trimmed.Set(x-bounds.Min.X, y-bounds.Min.Y, img.At(x, y))
-		}
-	}
-
-	return trimmed
-}
-
 // findContentBounds finds the content area by removing uniform borders
 func findContentBounds(img image.Image) image.Rectangle {
 	bounds := img.Bounds()
@@ -261,38 +234,6 @@ func findContentBounds(img image.Image) image.Rectangle {
 	}
 
 	return image.Rect(minX, minY, maxX, maxY)
-}
-
-// TrimImageFile trims borders from an image file and saves the result
-func TrimImageFile(inputPath, outputPath string) error {
-	// Open input file
-	file, err := os.Open(inputPath)
-	if err != nil {
-		return fmt.Errorf("failed to open input file: %w", err)
-	}
-	defer file.Close()
-
-	// Decode image
-	img, err := png.Decode(file)
-	if err != nil {
-		return fmt.Errorf("failed to decode image: %w", err)
-	}
-
-	// Trim borders
-	trimmed := TrimBorders(img)
-
-	// Save trimmed image
-	outFile, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to create output file: %w", err)
-	}
-	defer outFile.Close()
-
-	if err := png.Encode(outFile, trimmed); err != nil {
-		return fmt.Errorf("failed to encode image: %w", err)
-	}
-
-	return nil
 }
 
 // TrimMargins represents the removable margins on each edge of an image

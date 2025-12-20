@@ -92,12 +92,6 @@ type KindleAutomation interface {
     
     // Turn to next page
     TurnNextPage() error
-    
-    // Check if there are more pages (detect end of book)
-    HasMorePages() (bool, error)
-    
-    // Capture screenshot of current Kindle page
-    CaptureCurrentPage() (image.Image, error)
 }
 ```
 
@@ -157,28 +151,6 @@ type FileManager interface {
 - Handle file naming conflicts
 - Ensure proper cleanup on success, failure, or interruption
 
-### Configuration Manager
-**Purpose**: Load and validate configuration settings
-
-**Interface**:
-```go
-type ConfigManager interface {
-    // Load configuration from file
-    LoadConfig(path string) (*ConversionOptions, error)
-    
-    // Merge CLI flags with config file settings
-    MergeOptions(cliOptions, fileOptions *ConversionOptions) *ConversionOptions
-    
-    // Get default configuration
-    GetDefaults() *ConversionOptions
-}
-```
-
-**Responsibilities**:
-- Read configuration from file (if provided)
-- Validate configuration values
-- Apply defaults for missing values
-- Warn user about invalid values
 
 ## Data Models
 
@@ -225,8 +197,6 @@ type ConversionOptions struct {
     // Page turn key: "right" or "left" (auto-detects unless forced to left)
     PageTurnKey string
 
-    // Configuration file path
-    ConfigFile string
 }
 ```
 
@@ -267,8 +237,7 @@ type PDFOptions struct {
 
 1. **Initialization**
    - Parse CLI arguments
-   - Load configuration file (if specified)
-   - Merge options and apply defaults
+   - Apply defaults
    - Validate options
 
 2. **Pre-flight Checks**
@@ -470,9 +439,6 @@ type PDFOptions struct {
 **For any** specified page delay setting, the system must wait that duration between page turns.
 **Validates**: Requirement 6.2
 
-### Property 27: Configuration File Processing
-**For any** valid configuration file provided, settings must be read and applied during conversion.
-**Validates**: Requirement 6.3
 
 ### Property 28: Invalid Configuration Fallback
 **For any** invalid configuration values, default values must be used and user must be warned.
@@ -509,7 +475,7 @@ Test individual components in isolation with mocked dependencies:
 
 - **CLI Component**: Argument parsing, flag validation, help/version display
 - **File Manager**: Path validation, disk space checking, temp directory management
-- **Configuration Manager**: Config file parsing, option merging, default application
+
 - **PDF Generator**: PDF creation from test images, quality settings application
 
 ### Property-Based Testing
@@ -548,7 +514,7 @@ Document manual test procedures for:
 - Testing error scenarios (no app, no book, etc.)
 
 ### Test Data
-- Sample configuration files (valid and invalid)
+
 - Test images simulating Kindle page screenshots
 - Expected PDF outputs for comparison
 
@@ -589,23 +555,6 @@ Document manual test procedures for:
 - **Verbose mode**: Show detailed step-by-step progress, API calls, file operations
 - **Error messages**: Always actionable with clear next steps for user
 
-## Configuration File Format
-
-Support YAML or JSON configuration file:
-
-```yaml
-# Example config.yaml
-output_dir: ~/Documents/Kindle-PDFs
-screenshot_quality: 95
-page_delay: 500ms
-startup_delay: 3s
-show_countdown: true
-pdf_quality: high
-verbose: false
-auto_confirm: false
-```
-
-CLI flags override configuration file values.
 
 ## Future Considerations
 

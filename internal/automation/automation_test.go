@@ -92,24 +92,6 @@ func TestTurnNextPage(t *testing.T) {
 	}
 }
 
-func TestHasMorePages(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test")
-	}
-
-	automation := NewKindleAutomation()
-
-	hasMore, err := automation.HasMorePages()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// Current implementation always returns true
-	if !hasMore {
-		t.Error("expected hasMore to be true")
-	}
-}
-
 // Unit tests for AppleScript execution
 
 func TestRunAppleScript(t *testing.T) {

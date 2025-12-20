@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/oumi/k2p/pkg/config"
-	"github.com/oumi/k2p/pkg/imageprocessing"
+	"github.com/oumi/k2p/internal/config"
+	"github.com/oumi/k2p/internal/imageprocessing"
 )
 
 // detectPageTurnDirection tries to auto-detect the correct page turn direction

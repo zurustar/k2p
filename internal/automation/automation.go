@@ -2,9 +2,7 @@ package automation
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
-	"image"
 	"os/exec"
 	"strings"
 )
@@ -23,12 +21,6 @@ type KindleAutomation interface {
 	// TurnNextPage navigates to next page
 	// direction: "right" or "left" for arrow key direction
 	TurnNextPage(direction string) error
-
-	// HasMorePages detects if there are more pages (end of book detection)
-	HasMorePages() (bool, error)
-
-	// CaptureCurrentPage captures screenshot of current Kindle page
-	CaptureCurrentPage() (image.Image, error)
 }
 
 // AppleScriptAutomation implements KindleAutomation using AppleScript
@@ -129,19 +121,6 @@ end tell
 	}
 
 	return nil
-}
-
-// HasMorePages is deprecated - end detection is now done via screenshot comparison
-// This method is kept for interface compatibility but always returns true
-// The orchestrator uses screenshot similarity to detect the end of the book
-func (a *AppleScriptAutomation) HasMorePages() (bool, error) {
-	return true, nil
-}
-
-// CaptureCurrentPage is deprecated - screenshot capture is now handled by screenshot.Capturer
-// This method is kept for interface compatibility but returns an error
-func (a *AppleScriptAutomation) CaptureCurrentPage() (image.Image, error) {
-	return nil, errors.New("use screenshot.Capturer directly for page capture")
 }
 
 // runAppleScript executes an AppleScript and returns the output

@@ -10,7 +10,6 @@ macOS上でKindleの本をPDF形式に変換するGoベースのコマンドラ�
 - 🔄 ページめくり方向の自動検出
 - ⚙️ カスタマイズ可能な品質とタイミング設定
 - 🎯 シンプルなコマンドラインインターフェース
-- 🔧 設定ファイル対応
 
 ## 必要要件
 
@@ -121,9 +120,6 @@ k2p --quality 100 --pdf-quality high
 # カスタムページめくり遅延
 k2p --page-delay 1s
 
-# 設定ファイルを使用
-k2p --config config.yaml
-
 # 詳細出力
 k2p --verbose
 
@@ -134,22 +130,6 @@ k2p --trim-borders
 k2p --page-turn-key left
 ```
 
-### 設定ファイル
-
-`config.yaml`ファイルを作成:
-
-```yaml
-output_dir: ~/Documents/Kindle-PDFs
-screenshot_quality: 95
-page_delay: 500ms
-startup_delay: 3s
-show_countdown: true
-pdf_quality: high
-trim_borders: false  # trueに設定すると有効化
-page_turn_key: right  # または "left"（通常は自動検出）
-verbose: false
-auto_confirm: false
-```
 
 ## 動作の仕組み
 
@@ -172,7 +152,6 @@ auto_confirm: false
 | `--pdf-quality LEVEL` | PDF品質 (low/medium/high) | high |
 | `--trim-borders` | ボーダートリミングを有効化 | false |
 | `--page-turn-key DIRECTION` | ページめくり方向 (right/left) | 自動検出 |
-| `--config FILE` | 設定ファイルパス | - |
 | `-v, --verbose` | 詳細ログを有効化 | false |
 | `-y, --auto-confirm` | 確認プロンプトをスキップ | false |
 | `--version` | バージョン情報を表示 | - |
@@ -244,6 +223,36 @@ auto_confirm: false
 - 変換中、Kindleが最前面のウィンドウであることを確認
 - 変換中に他のアプリに切り替えない
 
+## AI Agentによる開発
+
+このプロジェクトでAI Agentを使って開発作業を行う場合、以下のルールに従ってください：
+
+### 作業開始前の必須コマンド
+
+**すべての実装作業やバグ修正を開始する前に、必ず以下のコマンドを実行してください：**
+
+```
+/start-work
+```
+
+このコマンドは、`.agent/workflows/start-work.md`に記載されている開発ガイドラインを読み込みます。
+
+### なぜこれが重要か
+
+- ドキュメント（`docs/tasks.md`と`docs/design.md`）を**コード実装の前に**更新することが必須です
+- このワークフローに従わないと、設計ドキュメントとタスク管理が意味をなさなくなります
+- 将来の開発者（人間とAI両方）が混乱します
+
+### Order of Operations
+
+1. ✓ `docs/tasks.md`を更新（タスク項目を追加）
+2. ✓ `docs/design.md`を更新（必要に応じて）
+3. ✓ コードを実装
+4. ✓ `docs/tasks.md`でタスクを`[x]`としてマーク
+5. ✓ `make build`とテストを実行
+
+**小さなバグ修正であっても、ドキュメント更新をスキップしないでください。**
+
 ## 開発
 
 ### ビルド
@@ -273,27 +282,21 @@ make test-integration
 ```
 k2p/
 ├── cmd/k2p/           # メインアプリケーションエントリポイント
-├── pkg/               # 公開パッケージ
+├── internal/          # プライベートパッケージ
 │   ├── automation/    # Kindleアプリ自動化
-│   ├── pdf/          # PDF生成
 │   ├── config/       # 設定管理
 │   ├── filemanager/  # ファイル操作
 │   ├── imageprocessing/ # 画像処理（トリミング、比較）
+│   ├── orchestrator/ # 変換オーケストレーション
+│   ├── pdf/          # PDF生成
 │   └── screenshot/   # スクリーンショット撮影
-├── internal/          # プライベートパッケージ
-│   └── orchestrator/ # 変換オーケストレーション
 ├── docs/             # ドキュメント
 └── Makefile          # ビルド自動化
 ```
 
 ## ライセンス
 
-MIT License - 詳細はLICENSEファイルを参照してください
+GNU General Public License v3.0 (GPL-3.0) - 詳細はLICENSEファイルを参照してください
 
-## コントリビューション
+このプログラムはフリーソフトウェアです。あなたはこれを、フリーソフトウェア財団によって発行された GNU 一般公衆利用許諾書(バージョン3か、それ以降のバージョンのうちどれか)が定める条件の下で再頒布または改変することができます。
 
-コントリビューションを歓迎します！プルリクエストをお気軽に送信してください。
-
-## 謝辞
-
-[kindle-to-pdf](https://github.com/rriifftt/kindle-to-pdf)のコンセプトに基づいています。

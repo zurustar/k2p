@@ -6,37 +6,35 @@ import (
 	"testing"
 )
 
-func TestTrimBorders(t *testing.T) {
+func TestCalculateTrimMargins(t *testing.T) {
 	t.Run("image with black borders", func(t *testing.T) {
 		// Create test image: 100x100 with 10px black border
 		img := createTestImageWithBorder(100, 100, 10, color.Black, color.White)
 
-		trimmed := TrimBorders(img)
-		bounds := trimmed.Bounds()
+		margins := CalculateTrimMargins(img)
 
-		// Should trim to approximately 80x80 (100 - 2*10)
-		expectedSize := 80
-		tolerance := 5
+		// Margins should be 10 on each side
+		expectedMargin := 10
+		tolerance := 2
 
-		if abs32(bounds.Dx(), expectedSize) > tolerance {
-			t.Errorf("expected width ~%d, got %d", expectedSize, bounds.Dx())
+		if abs32(margins.Top, expectedMargin) > tolerance {
+			t.Errorf("expected top margin ~%d, got %d", expectedMargin, margins.Top)
 		}
-		if abs32(bounds.Dy(), expectedSize) > tolerance {
-			t.Errorf("expected height ~%d, got %d", expectedSize, bounds.Dy())
+		if abs32(margins.Bottom, expectedMargin) > tolerance {
+			t.Errorf("expected bottom margin ~%d, got %d", expectedMargin, margins.Bottom)
 		}
 	})
 
 	t.Run("image with white borders", func(t *testing.T) {
 		img := createTestImageWithBorder(100, 100, 10, color.White, color.Black)
 
-		trimmed := TrimBorders(img)
-		bounds := trimmed.Bounds()
+		margins := CalculateTrimMargins(img)
 
-		expectedSize := 80
-		tolerance := 5
+		expectedMargin := 10
+		tolerance := 2
 
-		if abs32(bounds.Dx(), expectedSize) > tolerance {
-			t.Errorf("expected width ~%d, got %d", expectedSize, bounds.Dx())
+		if abs32(margins.Top, expectedMargin) > tolerance {
+			t.Errorf("expected top margin ~%d, got %d", expectedMargin, margins.Top)
 		}
 	})
 
@@ -49,12 +47,11 @@ func TestTrimBorders(t *testing.T) {
 			}
 		}
 
-		trimmed := TrimBorders(img)
-		bounds := trimmed.Bounds()
+		margins := CalculateTrimMargins(img)
 
-		// Should return similar size (no significant trim)
-		if bounds.Dx() < 90 || bounds.Dy() < 90 {
-			t.Error("image without borders was over-trimmed")
+		// Should find no margins
+		if margins.Top > 2 || margins.Bottom > 2 || margins.Left > 2 || margins.Right > 2 {
+			t.Errorf("image without borders had incorrect margins: %+v", margins)
 		}
 	})
 
@@ -73,20 +70,19 @@ func TestTrimBorders(t *testing.T) {
 			}
 		}
 
-		trimmed := TrimBorders(img)
-		bounds := trimmed.Bounds()
+		margins := CalculateTrimMargins(img)
 
-		// Should trim top border, height should be ~90
-		expectedHeight := 90
-		tolerance := 5
+		// Should trim top border ~10
+		expectedMargin := 10
+		tolerance := 2
 
-		if abs32(bounds.Dy(), expectedHeight) > tolerance {
-			t.Errorf("expected height ~%d, got %d", expectedHeight, bounds.Dy())
+		if abs32(margins.Top, expectedMargin) > tolerance {
+			t.Errorf("expected top margin ~%d, got %d", expectedMargin, margins.Top)
 		}
 
-		// Width should remain ~100
-		if abs32(bounds.Dx(), 100) > tolerance {
-			t.Errorf("expected width ~100, got %d", bounds.Dx())
+		// Other margins should be ~0
+		if margins.Bottom > tolerance {
+			t.Errorf("expected bottom margin ~0, got %d", margins.Bottom)
 		}
 	})
 }
