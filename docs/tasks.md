@@ -201,15 +201,12 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 - [x] Run and verify tests
 
 ## Phase 11: Documentation and Polish
-- [ ] Write comprehensive README.md
-  - [ ] Installation instructions
-  - [ ] Usage examples
-  - [ ] Configuration guide
-  - [ ] Troubleshooting section
-- [ ] Write developer documentation
-- [ ] Add code comments and documentation
-- [ ] Create example configuration files
-- [ ] Add build and release scripts
+## Phase 11: Documentation and Polish
+- [x] Update README.md with Full Reference (Installation, Usage, Troubleshooting)
+- [x] Ensure all major functions have GoDoc comments
+- [x] Create `CONTRIBUTING.md` for developers
+- [x] Finalize `MANUAL_TESTING.md` (already updated in Phase 10)
+- [x] Verify `make build` and `make clean` work flawlessly
 
 ## Phase 12: Release Preparation
 - [ ] Final testing on clean macOS system
