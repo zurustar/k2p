@@ -194,7 +194,7 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 
 ## Phase 9: Property-Based Testing
 - [ ] Implement property tests for all 34 properties:
-  - [ ] Properties 1-5: Basic conversion (Req 1)
+  - [x] Properties 1-5: Basic conversion (Req 1)
   - [ ] Properties 6-10: CLI interface (Req 2)
   - [ ] Properties 11-14: macOS integration (Req 3)
   - [ ] Properties 15-19: Sequential processing (Req 4)

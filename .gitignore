@@ -1,2 +1,5 @@
 .DS_Store
 build/*
+*.png
+debug_samples/
+test/integration/debug_samples/

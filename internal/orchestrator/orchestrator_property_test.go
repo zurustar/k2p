@@ -1,9 +1,15 @@
 package orchestrator
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+	"io"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,6 +46,7 @@ type MockFileManager struct {
 	DiskSpaceError error
 	ResolvePath    string
 	HandleExists   bool
+	LastInputPath  string
 }
 
 func (m *MockFileManager) ValidateOutputPath(path string) error { return nil }
@@ -47,6 +54,7 @@ func (m *MockFileManager) CheckDiskSpace(path string, estimatedBytes int64) erro
 	return m.DiskSpaceError
 }
 func (m *MockFileManager) ResolveOutputPath(outputDir string) (string, error) {
+	m.LastInputPath = outputDir
 	return m.ResolvePath, nil
 }
 func (m *MockFileManager) CreateTempDir() (string, error) {
@@ -75,11 +83,23 @@ func (m *MockCapturer) CaptureWithoutActivation(path string) error {
 	if m.CaptureError != nil {
 		return m.CaptureError
 	}
-	// Create dummy file
-	return os.WriteFile(path, []byte("dummy image content"), 0644)
+	// Create valid 10x10 image
+	img := image.NewRGBA(image.Rect(0, 0, 10, 10))
+	// Fill with white
+	for y := 0; y < 10; y++ {
+		for x := 0; x < 10; x++ {
+			img.Set(x, y, color.White)
+		}
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return png.Encode(f, img)
 }
 func (m *MockCapturer) CaptureFrontmostWindow(path string) error {
-	return os.WriteFile(path, []byte("dummy activation content"), 0644)
+	return m.CaptureWithoutActivation(path)
 }
 
 // Property tests
@@ -250,6 +270,142 @@ func TestProperty11_32_KindleStateValidation(t *testing.T) {
 			_, err := orch.ConvertCurrentBook(context.Background(), &config.ConversionOptions{AutoConfirm: true})
 			return err != nil && err.Error() == "Kindle app is not in foreground. Please bring Kindle to the front and try again"
 		},
+	))
+
+	properties.TestingRun(t)
+}
+
+// Property 2: Output Directory Respected
+func TestProperty2_OutputDirectoryRespected(t *testing.T) {
+	parameters := gopter.DefaultTestParameters()
+	parameters.MinSuccessfulTests = 50
+	properties := gopter.NewProperties(parameters)
+
+	properties.Property("Respects user specified output directory", prop.ForAll(
+		func(outputDir string) bool {
+			// Mock successful environment
+			auto := &MockAutomation{Installed: true, BookOpen: true, Foreground: true}
+			// We want ResolveOutputPath to be called with outputDir
+			fm := &MockFileManager{ResolvePath: "/tmp/resolved/out.pdf", HandleExists: true}
+			pg := &MockPDFGenerator{}
+			cap := &MockCapturer{}
+
+			orch := &DefaultOrchestrator{
+				automation:  auto,
+				fileManager: fm,
+				pdfGen:      pg,
+				capturer:    cap,
+			}
+
+			opts := &config.ConversionOptions{
+				AutoConfirm: true,
+				OutputDir:   outputDir,
+				Mode:        "generate",
+				PageDelay:   time.Millisecond,
+			}
+
+			orch.ConvertCurrentBook(context.Background(), opts)
+
+			// Check if file manager was called with the provided output dir
+			return fm.LastInputPath == outputDir
+		},
+		gen.Identifier(), // Use identifier for non-empty string
+	))
+
+	properties.TestingRun(t)
+}
+
+// Property 3: Default Output Location
+func TestProperty3_DefaultOutputLocation(t *testing.T) {
+	parameters := gopter.DefaultTestParameters()
+	parameters.MinSuccessfulTests = 50
+	properties := gopter.NewProperties(parameters)
+
+	properties.Property("Uses current directory when output dir is empty", prop.ForAll(
+		func() bool {
+			auto := &MockAutomation{Installed: true, BookOpen: true, Foreground: true}
+			fm := &MockFileManager{ResolvePath: "/tmp/resolved/out.pdf", HandleExists: true}
+			pg := &MockPDFGenerator{}
+			cap := &MockCapturer{}
+
+			orch := &DefaultOrchestrator{
+				automation:  auto,
+				fileManager: fm,
+				pdfGen:      pg,
+				capturer:    cap,
+			}
+
+			// Empty output dir
+			opts := &config.ConversionOptions{
+				AutoConfirm: true,
+				OutputDir:   "",
+				Mode:        "generate",
+				PageDelay:   time.Millisecond,
+			}
+
+			orch.ConvertCurrentBook(context.Background(), opts)
+
+			cwd, _ := os.Getwd()
+			return fm.LastInputPath == cwd
+		},
+	))
+
+	properties.TestingRun(t)
+}
+
+// Helper to capture stdout
+func captureStdout(f func()) string {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	f()
+
+	w.Close()
+	os.Stdout = old
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	return buf.String()
+}
+
+// Property 4: Success Message Display
+func TestProperty4_SuccessMessageDisplay(t *testing.T) {
+	parameters := gopter.DefaultTestParameters()
+	parameters.MinSuccessfulTests = 50
+	properties := gopter.NewProperties(parameters)
+
+	properties.Property("Success message contains output path", prop.ForAll(
+		func(outputPath string) bool {
+			// Setup successful mock environment
+			auto := &MockAutomation{Installed: true, BookOpen: true, Foreground: true}
+			// Ensure resolve path returns the generated outputPath
+			fm := &MockFileManager{ResolvePath: outputPath, HandleExists: true}
+			pg := &MockPDFGenerator{}
+			cap := &MockCapturer{}
+
+			orch := &DefaultOrchestrator{
+				automation:  auto,
+				fileManager: fm,
+				pdfGen:      pg,
+				capturer:    cap,
+			}
+
+			opts := &config.ConversionOptions{
+				AutoConfirm: true,
+				Mode:        "generate",
+				PageDelay:   time.Millisecond,
+			}
+
+			// Capture output
+			output := captureStdout(func() {
+				orch.ConvertCurrentBook(context.Background(), opts)
+			})
+
+			// Check for success message elements
+			return strings.Contains(output, "Conversion Complete") &&
+				strings.Contains(output, "Output: "+outputPath)
+		},
+		gen.Identifier(), // Use identifier to avoid path special char issues in simple check
 	))
 
 	properties.TestingRun(t)
