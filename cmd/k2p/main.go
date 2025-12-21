@@ -40,12 +40,12 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 		mode             = fs.String("mode", "generate", "Operation mode: 'detect' (analyze margins) or 'generate' (create PDF)")
 		trimTop          = fs.Int("trim-top", 0, "Pixels to trim from top edge (0 = no trim)")
 		trimBottom       = fs.Int("trim-bottom", 0, "Pixels to trim from bottom edge (0 = no trim)")
-		trimLeft         = fs.Int("trim-left", 0, "Pixels to trim from left edge (0 = no trim)")
-		trimRight        = fs.Int("trim-right", 0, "Pixels to trim from right edge (0 = no trim)")
-		pageTurnKey      = fs.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
-		showVersion      = fs.Bool("version", false, "Show version information")
-		showHelp         = fs.Bool("help", false, "Show help message")
-		showHelpShort    = fs.Bool("h", false, "Show help message (shorthand)")
+		trimHorizontal   = fs.Int("trim-horizontal", 0, "Pixels to trim from both left and right edges (0 = no trim)")
+
+		pageTurnKey   = fs.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
+		showVersion   = fs.Bool("version", false, "Show version information")
+		showHelp      = fs.Bool("help", false, "Show help message")
+		showHelpShort = fs.Bool("h", false, "Show help message (shorthand)")
 	)
 
 	// Parse flags
@@ -80,14 +80,14 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 
 	// Build CLI options
 	cliOpts := &config.ConversionOptions{
-		OutputDir:   *outputDir,
-		Verbose:     *verbose,
-		AutoConfirm: *autoConfirm,
-		Mode:        *mode,
-		TrimTop:     *trimTop,
-		TrimBottom:  *trimBottom,
-		TrimLeft:    *trimLeft,
-		TrimRight:   *trimRight,
+		OutputDir:      *outputDir,
+		Verbose:        *verbose,
+		AutoConfirm:    *autoConfirm,
+		Mode:           *mode,
+		TrimTop:        *trimTop,
+		TrimBottom:     *trimBottom,
+		TrimHorizontal: *trimHorizontal,
+
 		PageTurnKey: *pageTurnKey,
 	}
 
@@ -180,8 +180,8 @@ OPTIONS:
                               - generate: Create PDF with optional trimming
     --trim-top PIXELS         Pixels to trim from top (0 = no trim, default: 0)
     --trim-bottom PIXELS      Pixels to trim from bottom (0 = no trim, default: 0)
-    --trim-left PIXELS        Pixels to trim from left (0 = no trim, default: 0)
-    --trim-right PIXELS       Pixels to trim from right (0 = no trim, default: 0)
+    --trim-horizontal PIXELS  Pixels to trim from left and right (0 = no trim, default: 0)
+
     -v, --verbose             Enable verbose logging
     -y, --auto-confirm        Skip confirmation prompts
     --version                 Show version information
@@ -205,7 +205,9 @@ EXAMPLES:
     k2p --mode detect -v
 
     # Step 2: Generate PDF with detected margins
-    k2p --mode generate --trim-top 50 --trim-bottom 50 --trim-left 30 --trim-right 30
+    # Step 2: Generate PDF with detected margins
+    k2p --mode generate --trim-top 50 --trim-bottom 50 --trim-horizontal 30
+
 
 TRIMMING WORKFLOW:
     Kindle books have consistent app margins, but pages may have varying
@@ -219,7 +221,8 @@ TRIMMING WORKFLOW:
     2. Generation Mode (--mode generate):
        - Creates PDF with optional custom trimming
        - Specify trim values for edges you want to trim (0 = no trim)
-       - Example: --trim-left 30 --trim-right 30 (trims only left/right)
+       - Example: --trim-horizontal 30 (trims 30px from both left/right)
+
 
 
 TROUBLESHOOTING:

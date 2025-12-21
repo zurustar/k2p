@@ -33,6 +33,7 @@ func TestApplyDefaults(t *testing.T) {
 			Verbose:           true,
 			Mode:              "detect",
 			TrimTop:           50,
+			TrimHorizontal:    30,
 			PageTurnKey:       "left",
 		}
 
@@ -52,6 +53,9 @@ func TestApplyDefaults(t *testing.T) {
 		}
 		if merged.TrimTop != 50 {
 			t.Errorf("Expected trim top 50, got %d", merged.TrimTop)
+		}
+		if merged.TrimHorizontal != 30 {
+			t.Errorf("Expected trim horizontal 30, got %d", merged.TrimHorizontal)
 		}
 		if merged.PageTurnKey != "left" {
 			t.Errorf("Expected page turn key 'left', got %s", merged.PageTurnKey)

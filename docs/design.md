@@ -188,13 +188,13 @@ type ConversionOptions struct {
     // Custom trim margins in pixels (default: 0 = no trimming)
     // Trimming is applied if any value is non-zero
     // 0 means no trimming for that specific edge
-    // Example: TrimLeft=30, TrimRight=30, TrimTop=0, TrimBottom=0 trims only left/right
-    TrimTop    int
-    TrimBottom int
-    TrimLeft   int
-    TrimRight  int
+    // Example: TrimHorizontal=30, TrimTop=0, TrimBottom=0 trims 30px from both left and right
+    TrimTop        int
+    TrimBottom     int
+    TrimHorizontal int
 
     // Page turn key: "right" or "left" (auto-detects unless forced to left)
+
     PageTurnKey string
 }
 
