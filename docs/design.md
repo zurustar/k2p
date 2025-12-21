@@ -196,8 +196,14 @@ type ConversionOptions struct {
 
     // Page turn key: "right" or "left" (auto-detects unless forced to left)
     PageTurnKey string
-
 }
+
+func (o *ConversionOptions) Validate() error {
+    // Validates quality range (1-100)
+    // Validates PDF quality enum
+    // Validates other constraints
+}
+
 ```
 
 ### ConversionResult

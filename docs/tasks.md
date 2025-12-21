@@ -133,6 +133,11 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Move directories
   - [x] Update imports
   - [x] Update documentation
+- [x] Decouple option validation from CLI
+  - [x] Move validation logic to `config.ConversionOptions.Validate()`
+  - [x] Update CLI to use `Validate()`
+
+
 
 
 

@@ -78,3 +78,52 @@ func TestApplyDefaults(t *testing.T) {
 		}
 	})
 }
+
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		opts    *ConversionOptions
+		wantErr bool
+	}{
+		{
+			name: "Valid options",
+			opts: &ConversionOptions{
+				ScreenshotQuality: 95,
+				PDFQuality:        "high",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Invalid screenshot quality (low)",
+			opts: &ConversionOptions{
+				ScreenshotQuality: 0,
+				PDFQuality:        "high",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid screenshot quality (high)",
+			opts: &ConversionOptions{
+				ScreenshotQuality: 101,
+				PDFQuality:        "high",
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid PDF quality",
+			opts: &ConversionOptions{
+				ScreenshotQuality: 95,
+				PDFQuality:        "invalid",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.opts.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("ConversionOptions.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
