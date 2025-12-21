@@ -58,6 +58,11 @@ make test
 - Run `go fmt` before committing.
 - Ensure all exported functions have GoDoc comments.
 
+### Test Artifacts & Cleanup
+- Any temporary files (especially images) generated during testing **MUST** be cleaned up automatically.
+- Use `defer os.Remove(...)`, `defer os.RemoveAll(...)`, or `t.Cleanup(...)` in Go tests.
+- **Do not** leave debug artifacts (like `.png` files) in the repository.
+
 ## Release Process
 1. Ensure `docs/tasks.md` is fully updated.
 2. Verify all tests pass.
@@ -69,3 +74,4 @@ If you are an AI agent working on this repo:
 - **ALWAYS** check `docs/tasks.md` first.
 - **ALWAYS** update `docs/tasks.md` as you progress.
 - **NEVER** skip the `/start-work` workflow.
+- **Clean up** any test images/artifacts you generate immediately after verification.
