@@ -9,6 +9,7 @@ import (
 	"os/exec"
 
 	"github.com/oumi/k2p/internal/config"
+	"github.com/oumi/k2p/internal/converter"
 	"github.com/oumi/k2p/internal/orchestrator"
 )
 
@@ -41,6 +42,8 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 		trimTop          = fs.Int("trim-top", 0, "Pixels to trim from top edge (0 = no trim)")
 		trimBottom       = fs.Int("trim-bottom", 0, "Pixels to trim from bottom edge (0 = no trim)")
 		trimHorizontal   = fs.Int("trim-horizontal", 0, "Pixels to trim from both left and right edges (0 = no trim)")
+		inputFile        = fs.String("input", "", "Input PDF file path (required for pdf2md mode)")
+		inputShort       = fs.String("i", "", "Input PDF file path (shorthand)")
 
 		pageTurnKey   = fs.String("page-turn-key", "right", "Page turn direction: 'right' or 'left'")
 		showVersion   = fs.Bool("version", false, "Show version information")
@@ -77,6 +80,9 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 	if *autoConfirmShort {
 		*autoConfirm = true
 	}
+	if *inputShort != "" {
+		*inputFile = *inputShort
+	}
 
 	// Build CLI options
 	cliOpts := &config.ConversionOptions{
@@ -89,6 +95,7 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 		TrimHorizontal: *trimHorizontal,
 
 		PageTurnKey: *pageTurnKey,
+		InputFile:   *inputFile,
 	}
 
 	if *quality > 0 {
@@ -131,7 +138,39 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 		fmt.Fprintf(stdout, "Built: %s\n\n", buildTime)
 	}
 
-	// Run conversion
+	// Handle mode-specific actions
+	if finalOpts.Mode == "pdf2md" {
+		// Output file defaults to input file with .md extension if not specified
+		outputPath := finalOpts.OutputDir
+		if outputPath == "" {
+			// Determine from input path
+			// Basic implementation: replace extension
+			ext := ".pdf" // simplistic assumption or check
+			inputLen := len(finalOpts.InputFile)
+			if inputLen > 4 && finalOpts.InputFile[inputLen-4:] == ext {
+				outputPath = finalOpts.InputFile[:inputLen-4] + ".md"
+			} else {
+				outputPath = finalOpts.InputFile + ".md"
+			}
+		}
+
+		if finalOpts.Verbose {
+			fmt.Fprintf(stdout, "Converting PDF to Markdown...\n")
+			fmt.Fprintf(stdout, "Input: %s\n", finalOpts.InputFile)
+			fmt.Fprintf(stdout, "Output: %s\n", outputPath)
+		}
+
+		// Create converter and execute
+		conv := converter.NewConverter()
+		if err := conv.ConvertPDFToMarkdown(ctx, finalOpts.InputFile, outputPath); err != nil {
+			fmt.Fprintf(stderr, "Error converting PDF to Markdown: %v\n", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "Successfully converted to %s\n", outputPath)
+		return 0
+	}
+
+	// Run standard conversion (detect or generate)
 	result, err := orch.ConvertCurrentBook(ctx, finalOpts)
 	if err != nil {
 		// Play error sound to alert user (useful when Kindle is fullscreen)
@@ -178,6 +217,8 @@ OPTIONS:
     --mode MODE               Operation mode (default: generate)
                               - detect: Analyze margins, no PDF output
                               - generate: Create PDF with optional trimming
+                              - pdf2md: Convert existing PDF to Markdown (requires --input)
+    --input, -i FILE          Input PDF file path (required for pdf2md mode)
     --trim-top PIXELS         Pixels to trim from top (0 = no trim, default: 0)
     --trim-bottom PIXELS      Pixels to trim from bottom (0 = no trim, default: 0)
     --trim-horizontal PIXELS  Pixels to trim from left and right (0 = no trim, default: 0)
@@ -222,6 +263,11 @@ TRIMMING WORKFLOW:
        - Creates PDF with optional custom trimming
        - Specify trim values for edges you want to trim (0 = no trim)
        - Example: --trim-horizontal 30 (trims 30px from both left/right)
+
+    3. Markdown Conversion (--mode pdf2md):
+       - Extracts text from an existing PDF (with embedded text)
+       - Uses macOS native text extraction (like Preview)
+       - Example: k2p --mode pdf2md --input book.pdf
 
 
 

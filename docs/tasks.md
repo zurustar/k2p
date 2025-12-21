@@ -226,6 +226,20 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 - [ ] Create installation package
 - [ ] Test installation process
 - [ ] Prepare distribution
+ 
+ ## Phase 13: PDF to Markdown Conversion
+ - [x] Create `internal/converter` package
+   - [x] Define `MarkdownConverter` interface
+   - [x] Implement Go wrapper using `ledongthuc/pdf`
+     - [x] Import `github.com/ledongthuc/pdf`
+     - [x] Iterate over pages and extract text
+     - [x] Write to Markdown file
+ - [x] Update CLI
+   - [x] Add `--mode pdf2md`
+   - [x] Add `--input` / `-i` flag
+   - [x] Wire up command logic in main.go
+ - [x] Integration test
+   - [x] Test with a sample text-based PDF
 
 ## Notes
 

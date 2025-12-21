@@ -43,6 +43,9 @@ type ConversionOptions struct {
 
 	// Page turn key: "right" or "left" (default: "right")
 	PageTurnKey string
+
+	// Input file path for PDF to Markdown conversion
+	InputFile string
 }
 
 // ApplyDefaults applies default values to any unset options
@@ -115,6 +118,10 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 		merged.PageTurnKey = opts.PageTurnKey
 	}
 
+	if opts.InputFile != "" {
+		merged.InputFile = opts.InputFile
+	}
+
 	return merged
 }
 
@@ -127,6 +134,10 @@ func (o *ConversionOptions) Validate() error {
 	validPDFQualities := map[string]bool{"low": true, "medium": true, "high": true}
 	if !validPDFQualities[o.PDFQuality] {
 		return fmt.Errorf("pdf quality must be 'low', 'medium', or 'high'")
+	}
+
+	if o.Mode == "pdf2md" && o.InputFile == "" {
+		return fmt.Errorf("input file is required for pdf2md mode")
 	}
 
 	return nil

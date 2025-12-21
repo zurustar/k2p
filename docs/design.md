@@ -151,6 +151,25 @@ type FileManager interface {
 - Handle file naming conflicts
 - Ensure proper cleanup on success, failure, or interruption
 
+### Markdown Converter (New)
+**Purpose**: Convert PDF with embedded text (via macOS OCR) to Markdown format
+
+**Interface**:
+```go
+type MarkdownConverter interface {
+    // ConvertPDFToMarkdown extracts text from PDF and saves as Markdown
+    ConvertPDFToMarkdown(ctx context.Context, inputPDF string, outputMarkdown string) error
+}
+```
+
+**Implementation Strategy**:
+- Use Pure Go library (`github.com/ledongthuc/pdf`) to extracting text
+- **Single Binary Support**: Native Go compilation, no external dependencies
+- Process:
+  1. Open PDF file using Go library
+  2. Iterate through all pages
+  3. Extract plain text content
+  4. Write to Markdown file
 
 ## Data Models
 
@@ -196,6 +215,9 @@ type ConversionOptions struct {
     // Page turn key: "right" or "left" (auto-detects unless forced to left)
 
     PageTurnKey string
+
+    // Input file path for PDF to Markdown conversion
+    InputFile string
 }
 
 func (o *ConversionOptions) Validate() error {
@@ -302,6 +324,23 @@ type PDFOptions struct {
    - Preserve Kindle app state
    - Display actionable error message to user
    - Exit with non-zero status
+
+### PDF to Markdown Flow
+
+1. **Initialization**
+   - Parse `--mode pdf2md`
+   - Validate `--input` file exists (PDF)
+   - Determine `--output` path (default: same as input with .md extension)
+
+2. **Extraction**
+   - Open PDF using `pdf` library
+   - For each page:
+     - Extract text content (PlainText)
+     - Append to buffer
+
+3. **Output Generation**
+   - Write buffer to output Markdown file
+   - Display success message
 
 ### Error Scenarios
 
