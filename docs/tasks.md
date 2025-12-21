@@ -136,6 +136,11 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 - [x] Decouple option validation from CLI
   - [x] Move validation logic to `config.ConversionOptions.Validate()`
   - [x] Update CLI to use `Validate()`
+- [x] Merge trim-left/right into trim-horizontal
+  - [x] Update config/CLI
+  - [x] Update documentation
+
+
 
 
 

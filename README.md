@@ -66,7 +66,7 @@ k2pは強力なトリミング機能を備えています。最適な結果を�
 ページ全体から指定ピクセル数だけ削除します（ヘッダー/フッター削除に便利）。
 ```bash
 # 上部100px、下部50pxを削除
-k2p --trim-top 100 --trim-bottom 50 --mode generate
+k2p --mode generate --trim-top 50 --trim-bottom 50 --trim-horizontal 30
 ```
 
 #### マージン検出モード
@@ -80,10 +80,12 @@ k2p --mode detect
 | フラグ | 説明 | デフォルト |
 |--------|------|------------|
 | `--output`, `-o` | 出力ディレクトリ | カレント |
-| `--trim-top` | 上部トリミング (px) | 0 |
-| `--trim-bottom` | 下部トリミング (px) | 0 |
+| `--trim-top PIXELS` | Pixels to trim from the top edge (default: 0) |
+| `--trim-bottom PIXELS` | Pixels to trim from the bottom edge (default: 0) |
+| `--trim-horizontal PIXELS` | Pixels to trim from both left and right edges (default: 0) |
 | `--page-turn-key` | めくり方向 (left/right) | 自動検出 |
 | `--auto-confirm`, `-y` | 開始確認をスキップ | false |
+
 | `--verbose`, `-v` | 詳細ログ表示 | false |
 
 ---

@@ -178,11 +178,16 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 		fmt.Printf("\nMinimum removable margins (safe for all pages):\n")
 		fmt.Printf("  Top:    %d pixels\n", margins.Top)
 		fmt.Printf("  Bottom: %d pixels\n", margins.Bottom)
-		fmt.Printf("  Left:   %d pixels\n", margins.Left)
 		fmt.Printf("  Right:  %d pixels\n", margins.Right)
 		fmt.Printf("\nTo generate PDF with these margins, run:\n")
-		fmt.Printf("  k2p --mode generate --trim-top %d --trim-bottom %d --trim-left %d --trim-right %d\n",
-			margins.Top, margins.Bottom, margins.Left, margins.Right)
+		// Calculate max of left and right for suggestion
+		maxHorizontal := margins.Left
+		if margins.Right > maxHorizontal {
+			maxHorizontal = margins.Right
+		}
+
+		fmt.Printf("  k2p --mode generate --trim-top %d --trim-bottom %d --trim-horizontal %d\n",
+			margins.Top, margins.Bottom, maxHorizontal)
 
 		result.Duration = time.Since(startTime)
 		fmt.Printf("\nDuration: %s\n", result.Duration.Round(time.Second))
@@ -196,20 +201,21 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	// Step 10: Apply custom trimming to all screenshots (if specified)
 	// This is done AFTER capture to avoid interfering with end-of-book detection
 	hasCustomTrim := options.Mode == "generate" &&
-		(options.TrimTop != 0 || options.TrimBottom != 0 || options.TrimLeft != 0 || options.TrimRight != 0)
+		(options.TrimTop != 0 || options.TrimBottom != 0 || options.TrimHorizontal != 0)
 
 	if hasCustomTrim {
 		if options.Verbose {
 			fmt.Printf("\nApplying custom trimming to %d pages...\n", len(screenshots))
-			fmt.Printf("  Trim margins: Top=%d Bottom=%d Left=%d Right=%d\n",
-				options.TrimTop, options.TrimBottom, options.TrimLeft, options.TrimRight)
+			fmt.Printf("  Trim margins: Top=%d Bottom=%d Horizontal=%d (applied to Left/Right)\n",
+				options.TrimTop, options.TrimBottom, options.TrimHorizontal)
 		}
 
 		trimmedScreenshots := make([]string, 0, len(screenshots))
 		for i, screenshot := range screenshots {
 			trimmedPath := filepath.Join(tempDir, fmt.Sprintf("page_%04d_trimmed.png", i+1))
 			if err := o.trimScreenshotWithCustomMargins(screenshot, trimmedPath,
-				options.TrimTop, options.TrimBottom, options.TrimLeft, options.TrimRight, false); err != nil {
+				options.TrimTop, options.TrimBottom, options.TrimHorizontal, options.TrimHorizontal, false); err != nil {
+
 				if options.Verbose {
 					fmt.Printf("  Warning: Failed to trim page %d, using original: %v\n", i+1, err)
 				}
@@ -313,17 +319,16 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 	// Allow 0 values - user can trim only specific edges
 	// Trimming is enabled if any trim value is non-zero
 	hasCustomTrim := options.Mode == "generate" &&
-		(options.TrimTop != 0 || options.TrimBottom != 0 || options.TrimLeft != 0 || options.TrimRight != 0)
+		(options.TrimTop != 0 || options.TrimBottom != 0 || options.TrimHorizontal != 0)
 
 	// Debug: Show trimming configuration
 	if options.Verbose {
 		fmt.Printf("\n[DEBUG] Custom trimming configuration:\n")
-		fmt.Printf("  Mode:       %s\n", options.Mode)
-		fmt.Printf("  TrimTop:    %d\n", options.TrimTop)
-		fmt.Printf("  TrimBottom: %d\n", options.TrimBottom)
-		fmt.Printf("  TrimLeft:   %d\n", options.TrimLeft)
-		fmt.Printf("  TrimRight:  %d\n", options.TrimRight)
-		fmt.Printf("  hasCustomTrim: %v\n", hasCustomTrim)
+		fmt.Printf("  Mode:           %s\n", options.Mode)
+		fmt.Printf("  TrimTop:        %d\n", options.TrimTop)
+		fmt.Printf("  TrimBottom:     %d\n", options.TrimBottom)
+		fmt.Printf("  TrimHorizontal: %d\n", options.TrimHorizontal)
+		fmt.Printf("  hasCustomTrim:  %v\n", hasCustomTrim)
 	}
 
 	// Auto-detect page turn direction (unless explicitly set to "left")

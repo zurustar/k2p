@@ -36,11 +36,10 @@ type ConversionOptions struct {
 	Mode string
 
 	// Custom trim margins in pixels (default: 0 = no trimming)
-	// Used when Mode == "generate" and all four values > 0
-	TrimTop    int
-	TrimBottom int
-	TrimLeft   int
-	TrimRight  int
+	// Used when Mode == "generate" and any value is non-zero
+	TrimTop        int
+	TrimBottom     int
+	TrimHorizontal int
 
 	// Page turn key: "right" or "left" (default: "right")
 	PageTurnKey string
@@ -61,9 +60,9 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 		Mode:              "generate",
 		TrimTop:           0,
 		TrimBottom:        0,
-		TrimLeft:          0,
-		TrimRight:         0,
-		PageTurnKey:       "right",
+		TrimHorizontal:    0,
+
+		PageTurnKey: "right",
 	}
 
 	if opts == nil {
@@ -108,12 +107,10 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 	if opts.TrimBottom != 0 {
 		merged.TrimBottom = opts.TrimBottom
 	}
-	if opts.TrimLeft != 0 {
-		merged.TrimLeft = opts.TrimLeft
+	if opts.TrimHorizontal != 0 {
+		merged.TrimHorizontal = opts.TrimHorizontal
 	}
-	if opts.TrimRight != 0 {
-		merged.TrimRight = opts.TrimRight
-	}
+
 	if opts.PageTurnKey != "" {
 		merged.PageTurnKey = opts.PageTurnKey
 	}
