@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -118,4 +119,18 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 	}
 
 	return merged
+}
+
+// Validate checks if the options are valid
+func (o *ConversionOptions) Validate() error {
+	if o.ScreenshotQuality < 1 || o.ScreenshotQuality > 100 {
+		return fmt.Errorf("screenshot quality must be between 1 and 100")
+	}
+
+	validPDFQualities := map[string]bool{"low": true, "medium": true, "high": true}
+	if !validPDFQualities[o.PDFQuality] {
+		return fmt.Errorf("pdf quality must be 'low', 'medium', or 'high'")
+	}
+
+	return nil
 }

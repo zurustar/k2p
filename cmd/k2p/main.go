@@ -108,14 +108,9 @@ func run(args []string, stdout, stderr io.Writer, orch orchestrator.ConversionOr
 	finalOpts := config.ApplyDefaults(cliOpts)
 
 	// Validate final options
-	if finalOpts.ScreenshotQuality < 1 || finalOpts.ScreenshotQuality > 100 {
-		fmt.Fprintf(stderr, "Error: screenshot quality must be between 1 and 100\n")
-		return 1
-	}
-
-	validPDFQualities := map[string]bool{"low": true, "medium": true, "high": true}
-	if !validPDFQualities[finalOpts.PDFQuality] {
-		fmt.Fprintf(stderr, "Error: pdf quality must be 'low', 'medium', or 'high'\n")
+	// Validate final options
+	if err := finalOpts.Validate(); err != nil {
+		fmt.Fprintf(stderr, "Error: %v\n", err)
 		return 1
 	}
 
