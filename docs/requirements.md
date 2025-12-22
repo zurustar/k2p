@@ -113,4 +113,17 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 5. WHEN margin detection mode is active, THE Kindle_Converter SHALL NOT generate a PDF output file
 6. WHEN analyzing margins, THE Kindle_Converter SHALL identify the minimum removable margin for each edge to avoid trimming actual book content that may appear on some pages
 7. WHEN trim margins are applied during PDF generation, THE Kindle_Converter SHALL use the same trimming algorithm for consistency with margin detection results
+
+### Requirement 9
+
+**User Story:** As a user who prefers graphical interfaces, I want a native macOS application window, so that I can configure and run conversions without using the command line.
+
+#### Acceptance Criteria
+
+1. WHEN the application is launched via the GUI binary, THE Kindle_Converter SHALL open a native graphical window (not a terminal)
+2. WHEN using the GUI, THE Kindle_Converter SHALL provide visual controls for all major configuration options (Mode, Output Dir, Quality, Delays, etc.)
+3. WHEN selecting file or directory paths, THE Kindle_Converter SHALL open standard macOS native file picker dialogs
+4. WHEN a conversion is running, THE Kindle_Converter SHALL display logs and status within the GUI window
+5. WHEN the GUI window is closed, THE Kindle_Converter SHALL terminate the application process cleanly
+6. WHEN running in GUI mode, THE Kindle_Converter SHALL support all underlying conversion features (Generate, Detect, PDF2MD) available in the CLI
 ```

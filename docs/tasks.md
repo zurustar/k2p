@@ -241,6 +241,21 @@ This document tracks the implementation progress of the Kindle to PDF converter.
  - [x] Integration test
    - [x] Test with a sample text-based PDF
 
+## Phase 14: Web-Based GUI Implementation
+- [x] Create `cmd/k2p-gui` directory structure
+- [x] Create `cmd/k2p-gui/assets` for static files
+- [x] Implement HTML/JS frontend
+  - [x] Design form with all configuration options
+  - [x] Implement log streaming console
+- [x] Implement Go Web Server
+  - [x] Serve static files via `embed`
+  - [x] Implement API endpoints for conversion
+  - [x] Implement WebSocket/SSE for log streaming
+  - [x] Auto-open default browser on startup
+- [x] Integrate with Orchestrator
+  - [x] Hook up `ConversionOptions`
+  - [x] Redirect logs to frontend
+
 ## Notes
 
 ### Property References

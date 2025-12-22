@@ -1,102 +1,33 @@
-.PHONY: build test clean install test-unit test-property test-integration run
+APP_NAME := k2p
+APP_ID := com.k2p.app
+ICON := $(shell pwd)/cmd/k2p-gui/Icon.png
+SRC_DIR := ./cmd/k2p-gui
+BUILD_DIR := build
+FYNE_CMD := $(HOME)/go/bin/fyne
 
-# Build variables
-BINARY_NAME=k2p
-BUILD_DIR=build
-INSTALL_PATH=/usr/local/bin
+.PHONY: all build package clean checks
 
-# Go parameters
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOTEST=$(GOCMD) test
-GOCLEAN=$(GOCMD) clean
-GOMOD=$(GOCMD) mod
+all: package
 
-# Build the application
+checks:
+	@if [ ! -f "$(ICON)" ]; then echo "Error: $(ICON) not found. Please ensure icon exists."; exit 1; fi
+
 build:
-	@echo "Building $(BINARY_NAME)..."
-	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -ldflags="-X 'main.buildTime=$(shell date '+%Y-%m-%d %H:%M:%S')'" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/k2p
-	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
+	mkdir -p $(BUILD_DIR)
+	go build -o $(BUILD_DIR)/$(APP_NAME) $(SRC_DIR)
 
-# Run all tests
-test:
-	@echo "Running all tests..."
-	$(GOTEST) -v ./...
+package: checks
+	mkdir -p $(BUILD_DIR)
+	$(FYNE_CMD) package --os darwin --name "$(APP_NAME)" --app-id "$(APP_ID)" --src "$(SRC_DIR)" --icon "$(ICON)" --release
+	@if [ -d "$(APP_NAME).app" ]; then \
+		rm -rf $(BUILD_DIR)/$(APP_NAME).app; \
+		mv $(APP_NAME).app $(BUILD_DIR)/; \
+		echo "Package created at $(BUILD_DIR)/$(APP_NAME).app"; \
+	else \
+		echo "Error: Failed to create $(APP_NAME).app"; \
+		exit 1; \
+	fi
 
-# Run unit tests only
-test-unit:
-	@echo "Running unit tests..."
-	$(GOTEST) -v -short ./...
-
-# Run property-based tests
-test-property:
-	@echo "Running property-based tests..."
-	$(GOTEST) -v -run Property ./...
-
-# Run integration tests
-test-integration:
-	@echo "Running integration tests..."
-	$(GOTEST) -v -run Integration ./...
-
-# Run with race detection
-test-race:
-	@echo "Running tests with race detection..."
-	$(GOTEST) -race -v ./...
-
-# Clean build artifacts
 clean:
-	@echo "Cleaning..."
-	$(GOCLEAN)
 	rm -rf $(BUILD_DIR)
-	@echo "Clean complete"
-
-# Install the binary
-install: build
-	@echo "Installing $(BINARY_NAME) to $(INSTALL_PATH)..."
-	cp $(BUILD_DIR)/$(BINARY_NAME) $(INSTALL_PATH)/$(BINARY_NAME)
-	@echo "Installation complete"
-
-# Uninstall the binary
-uninstall:
-	@echo "Uninstalling $(BINARY_NAME)..."
-	rm -f $(INSTALL_PATH)/$(BINARY_NAME)
-	@echo "Uninstall complete"
-
-# Run the application
-run: build
-	$(BUILD_DIR)/$(BINARY_NAME)
-
-# Download dependencies
-deps:
-	@echo "Downloading dependencies..."
-	$(GOMOD) download
-	$(GOMOD) tidy
-
-# Format code
-fmt:
-	@echo "Formatting code..."
-	$(GOCMD) fmt ./...
-
-# Run linter
-lint:
-	@echo "Running linter..."
-	golangci-lint run
-
-# Show help
-help:
-	@echo "Available targets:"
-	@echo "  build            - Build the application"
-	@echo "  test             - Run all tests"
-	@echo "  test-unit        - Run unit tests only"
-	@echo "  test-property    - Run property-based tests"
-	@echo "  test-integration - Run integration tests"
-	@echo "  test-race        - Run tests with race detection"
-	@echo "  clean            - Clean build artifacts"
-	@echo "  install          - Install the binary to $(INSTALL_PATH)"
-	@echo "  uninstall        - Uninstall the binary"
-	@echo "  run              - Build and run the application"
-	@echo "  deps             - Download and tidy dependencies"
-	@echo "  fmt              - Format code"
-	@echo "  lint             - Run linter"
-	@echo "  help             - Show this help message"
+	rm -rf $(APP_NAME).app

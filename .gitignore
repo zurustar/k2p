@@ -1,5 +1,9 @@
 .DS_Store
 build/*
 *.png
+!cmd/k2p-gui/Icon.png
 debug_samples/
 test/integration/debug_samples/
+/k2p
+/k2p-gui
+*.app

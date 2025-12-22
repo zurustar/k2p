@@ -11,11 +11,13 @@ The Kindle to PDF converter is a Go-based command-line application for macOS tha
 The application follows a simple layered architecture:
 
 ```
-┌─────────────────────────────────────┐
-│           CLI Layer                 │
-│  (Command parsing, user interface)  │
-└─────────────────────────────────────┘
-                    │
+┌─────────────────────┐       ┌─────────────────────┐
+│      CLI Layer      │       │      GUI Layer      │
+│  (Command Parsing)  │       │ (Fyne Native App)   │
+└─────────────────────┘       └─────────────────────┘
+           │                             │
+           └──────────────┬──────────────┘
+                          ▼
 ┌─────────────────────────────────────┐
 │      Conversion Orchestrator        │
 │   (Workflow coordination, state)    │
@@ -47,6 +49,18 @@ The application follows a simple layered architecture:
 - Show clear error messages for invalid arguments
 
 **Dependencies**: Standard library `flag` package or `cobra` CLI framework
+
+### GUI Component (Fyne)
+**Purpose**: Provide a native graphical user interface for macOS users.
+
+**Responsibilities**:
+- Render native application window using Fyne framework
+- Bind form inputs to `ConversionOptions` struct
+- Redirect standard output/error to in-app log console
+- Integrate native macOS file picker dialogs
+- Manage application lifecycle (keep alive during conversion)
+
+**Dependencies**: `fyne.io/fyne/v2`, `internal/orchestrator`
 
 ### Conversion Orchestrator
 **Purpose**: Coordinate the entire conversion workflow for the currently open book
