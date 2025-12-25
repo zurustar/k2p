@@ -111,6 +111,12 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Ensure similarity comparison logs only show with --verbose
   - [x] Keep important user-facing messages (end-of-book detection result) always visible
 
+- [x] Fix: Detection Mode Output and GUI
+  - [x] Update `ConversionResult` to include detected margins
+  - [x] Update Orchestrator to report Left/Right margins in console
+  - [x] Update GUI to display detection results in a structured way
+
+
 
 ## Maintenance
 - [x] Investigate and remove unused code
