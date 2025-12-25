@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -49,7 +50,13 @@ func main() {
 
 	// Output
 	outputDir = widget.NewEntry()
-	outputDir.SetPlaceHolder("Current Directory")
+	// Set default to Desktop
+	if home, err := os.UserHomeDir(); err == nil {
+		outputDir.SetText(filepath.Join(home, "Desktop"))
+	} else {
+		outputDir.SetPlaceHolder("Current Directory")
+	}
+
 	outputDirBtn := widget.NewButton("Browse", func() {
 		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
 			if uri != nil {
@@ -139,7 +146,16 @@ func main() {
 		formRow("Page Turn:", pageTurnKey),
 		formRow("Delays (ms/s):", pageDelay, startupDelay),
 		container.NewHBox(verbose, autoConfirm),
+		widget.NewSeparator(),
+		widget.NewLabelWithStyle("Result:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 	)
+
+	resultLabel := widget.NewMultiLineEntry()
+	resultLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	resultLabel.Disable()
+	resultLabel.SetMinRowsVisible(5)
+
+	tabDetect.Add(resultLabel)
 
 	// Tab 3: PDF to Markdown
 	tabPdf2Md := container.NewVBox(
@@ -278,6 +294,7 @@ func main() {
 			}()
 
 			var err error
+			var result *orchestrator.ConversionResult
 			if finalOpts.Mode == "pdf2md" {
 				fmt.Printf("Converting PDF to Markdown...\nInput: %s\n", finalOpts.InputFile)
 				outputPath := finalOpts.OutputDir
@@ -288,7 +305,30 @@ func main() {
 				err = conv.ConvertPDFToMarkdown(ctx, finalOpts.InputFile, outputPath)
 			} else {
 				orch := orchestrator.NewOrchestrator()
-				_, err = orch.ConvertCurrentBook(ctx, finalOpts)
+				result, err = orch.ConvertCurrentBook(ctx, finalOpts)
+			}
+
+			// Update result display if in detect mode
+			if err == nil && finalOpts.Mode == "detect" && result != nil && result.DetectedMargins != nil {
+				margins := result.DetectedMargins
+				maxH := margins.Left
+				if margins.Right > maxH {
+					maxH = margins.Right
+				}
+
+				resText := fmt.Sprintf(
+					"Top:    %d\nBottom: %d\nLeft:   %d\nRight:  %d\n\n"+
+						"Recommended Settings:\n"+
+						"Trim Top:        %d\n"+
+						"Trim Bottom:     %d\n"+
+						"Trim Horizontal: %d (Max of Left/Right)",
+					margins.Top, margins.Bottom, margins.Left, margins.Right,
+					margins.Top, margins.Bottom, maxH,
+				)
+				resultLabel.SetText(resText)
+			} else if finalOpts.Mode == "detect" {
+				// Clear on failure or if no result
+				resultLabel.SetText("")
 			}
 
 			// Restore stdout

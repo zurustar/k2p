@@ -107,7 +107,7 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 #### Acceptance Criteria
 
 1. WHEN a user runs the tool in margin detection mode, THE Kindle_Converter SHALL capture all pages and analyze the trim margins without generating a PDF
-2. WHEN margin detection completes, THE Kindle_Converter SHALL report the minimum trim values (in pixels) for top, bottom, and horizontal (applied symmetrically to left/right) edges across all pages
+2. WHEN margin detection completes, THE Kindle_Converter SHALL report the minimum trim values (in pixels) for top, bottom, left, and right edges across all pages, along with a recommended symmetric 'horizontal' value
 3. WHEN a user runs the tool in PDF generation mode with custom trim margins, THE Kindle_Converter SHALL apply the specified pixel values to trim each page before PDF generation
 4. WHEN custom trim margins are specified, THE Kindle_Converter SHALL require three margin values (top, bottom, horizontal) to be provided
 5. WHEN margin detection mode is active, THE Kindle_Converter SHALL NOT generate a PDF output file
@@ -126,4 +126,6 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 4. WHEN a conversion is running, THE Kindle_Converter SHALL display logs and status within the GUI window
 5. WHEN the GUI window is closed, THE Kindle_Converter SHALL terminate the application process cleanly
 6. WHEN running in GUI mode, THE Kindle_Converter SHALL support all underlying conversion features (Generate, Detect, PDF2MD) available in the CLI
+7. WHEN the GUI application starts, THE Kindle_Converter SHALL pre-fill the output directory field with the user's Desktop path by default
+8. WHEN margin detection completes in the GUI, THE Kindle_Converter SHALL display the results (margins and recommendations) in a dedicated, easy-to-read area separate from the scrolling logs
 ```

@@ -12,31 +12,37 @@ When implementing any new feature or making significant changes:
 
 **YOU MUST FOLLOW THIS ORDER:**
 
-0. **Check Git Workflow**
-   - Read `.agent/workflows/git-flow.md` to ensure you are on the correct branch.
-   - Run `git status` to verify your environment.
+0. **Define Git Branch Strategy**
+   - Read `.agent/workflows/git-flow.md`.
+   - **CRITICAL**: In your **Implementation Plan**, you MUST include a specific step to create or switch to the correct branch (e.g., `git checkout -b feature/name`).
+   - Run `git status` to verify your current environment.
 
-1. **Update docs/design.md FIRST** (if design changes are needed)
+1. **Update docs/requirements.md FIRST** (if new requirements/features are requested)
+   - Add new User Stories or Acceptance Criteria
+   - Ensure the "What" is defined before the "How"
+   - Verify with user if requirements are ambiguous
+
+2. **Update docs/design.md SECOND** (if design changes are needed)
    - Add or modify relevant sections (Components, Data Models, Workflow, etc.)
    - Update interfaces if they change
    - Document new correctness properties if applicable
    - Keep the design document in sync with implementation
 
-2. **Update docs/tasks.md BEFORE implementing**
+3. **Update docs/tasks.md BEFORE implementing**
    - Add new tasks/phases for the feature or bug fix
    - Place them in the appropriate section (Bug Fixes, Additional Features, etc.)
    - Mark tasks as `[ ]` (incomplete) initially
    - Update "Current Status" section if needed
 
-3. **Implement the code**
+4. **Implement the code**
    - Now you can make the actual code changes
    - Follow the plan from the documentation
 
-4. **Mark tasks complete in docs/tasks.md**
+5. **Mark tasks complete in docs/tasks.md**
    - Update tasks to `[x]` when completed
    - Keep task list synchronized with actual progress
 
-5. **Verify design.md still matches implementation**
+6. **Verify design.md and requirements.md match implementation**
    - Ensure documentation reflects what was actually built
 
 ## Why This Matters
@@ -86,11 +92,12 @@ This ensures the task tracking document always reflects the current state of the
 ## Quick Reference
 
 **For ANY code change (including bug fixes):**
-1. ✓ Update docs/tasks.md FIRST (add task items)
-2. ✓ Update docs/design.md if needed (design changes)
-3. ✓ Implement the code
-4. ✓ Mark tasks as [x] in docs/tasks.md
-5. ✓ Run `make build` and tests
-6. ✓ Verify docs still match implementation
+1. ✓ Update docs/requirements.md (if new requirements)
+2. ✓ Update docs/tasks.md FIRST (add task items)
+3. ✓ Update docs/design.md if needed (design changes)
+4. ✓ Implement the code
+5. ✓ Mark tasks as [x] in docs/tasks.md
+6. ✓ Run `make build` and tests
+7. ✓ Verify docs (requirements/design) still match implementation
 
 **NEVER skip documentation updates, even for "small" changes.**

@@ -259,6 +259,12 @@ type ConversionResult struct {
     
     // Any warnings encountered
     Warnings []string
+
+    // Detected margins (only populated in detect mode)
+    // Pointer to avoid circular dependency if possible, or just struct if imported
+    // Using string/map representation in design doc for simplicity or full type if known
+    // Since this is design doc, we describe the data.
+    DetectedMargins interface{} // Holds *imageprocessing.TrimMargins
 }
 ```
 

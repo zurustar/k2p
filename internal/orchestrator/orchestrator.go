@@ -32,6 +32,9 @@ type ConversionResult struct {
 
 	// Any warnings encountered
 	Warnings []string
+
+	// DetectedMargins contains the analysis result from detect mode
+	DetectedMargins *imageprocessing.TrimMargins
 }
 
 // ConversionOrchestrator coordinates the entire conversion workflow
@@ -178,18 +181,28 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 		fmt.Printf("\nMinimum removable margins (safe for all pages):\n")
 		fmt.Printf("  Top:    %d pixels\n", margins.Top)
 		fmt.Printf("  Bottom: %d pixels\n", margins.Bottom)
+		fmt.Printf("  Left:   %d pixels\n", margins.Left)
 		fmt.Printf("  Right:  %d pixels\n", margins.Right)
+
 		fmt.Printf("\nTo generate PDF with these margins, run:\n")
-		// Calculate max of left and right for suggestion
+		// Calculate max of left and right for suggestion (since we use trim-horizontal for PDF)
 		maxHorizontal := margins.Left
 		if margins.Right > maxHorizontal {
 			maxHorizontal = margins.Right
+		}
+
+		// Provide clear context about horizontal trimming
+		if margins.Left != margins.Right {
+			fmt.Printf("  (Note: PDF generation uses symmetric horizontal trimming. Using max(%d, %d) = %d)\n",
+				margins.Left, margins.Right, maxHorizontal)
 		}
 
 		fmt.Printf("  k2p --mode generate --trim-top %d --trim-bottom %d --trim-horizontal %d\n",
 			margins.Top, margins.Bottom, maxHorizontal)
 
 		result.Duration = time.Since(startTime)
+		result.DetectedMargins = &margins // Store for GUI
+
 		fmt.Printf("\nDuration: %s\n", result.Duration.Round(time.Second))
 
 		// Play completion sound
