@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
 
 // FileManager handles all file system operations
@@ -193,7 +194,7 @@ func (fm *DefaultFileManager) ResolveOutputPath(outputDir string) (string, error
 
 // generateTimestamp generates a timestamp string for filenames
 func generateTimestamp() string {
-	return fmt.Sprintf("%d", os.Getpid()) // Simple implementation for now
+	return time.Now().Format("20060102-150405")
 }
 
 // CreateTempDir creates a temporary directory for screenshots

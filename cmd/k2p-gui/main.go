@@ -150,12 +150,14 @@ func main() {
 		widget.NewLabelWithStyle("Result:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 	)
 
-	resultLabel := widget.NewMultiLineEntry()
+	resultLabel := widget.NewLabel("")
 	resultLabel.TextStyle = fyne.TextStyle{Monospace: true}
-	resultLabel.Disable()
-	resultLabel.SetMinRowsVisible(5)
+	resultLabel.Wrapping = fyne.TextWrapWord
 
-	tabDetect.Add(resultLabel)
+	resultScroll := container.NewVScroll(resultLabel)
+	resultScroll.SetMinSize(fyne.NewSize(0, 150))
+
+	tabDetect.Add(resultScroll)
 
 	// Tab 3: PDF to Markdown
 	tabPdf2Md := container.NewVBox(

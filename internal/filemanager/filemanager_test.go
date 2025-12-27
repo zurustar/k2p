@@ -3,6 +3,7 @@ package filemanager
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -160,6 +161,19 @@ func TestResolveOutputPath(t *testing.T) {
 		_, err := fm.ResolveOutputPath("/nonexistent/directory")
 		if err == nil {
 			t.Error("expected error for non-existent directory")
+		}
+	})
+
+	t.Run("timestamp format", func(t *testing.T) {
+		path, err := fm.ResolveOutputPath(os.TempDir())
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		// Expected format: kindle_book_YYYYMMDD-HHMMSS.pdf
+		// Regex: kindle_book_\d{8}-\d{6}\.pdf
+		match, _ := regexp.MatchString(`kindle_book_\d{8}-\d{6}\.pdf$`, path)
+		if !match {
+			t.Errorf("expected path to match timestamp format, got: %s", path)
 		}
 	})
 }

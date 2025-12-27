@@ -63,6 +63,7 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 3. WHEN processing multiple books, THE Kindle_Converter SHALL maintain consistent naming conventions for output PDF files
 4. WHEN a target PDF file already exists, THE Kindle_Converter SHALL prompt the user for overwrite confirmation or skip the conversion
 5. WHEN the user cancels during batch processing, THE Kindle_Converter SHALL complete the current book conversion and then stop
+6. WHEN generating filenames automatically, THE Kindle_Converter SHALL use the current timestamp (YYYYMMDD-HHMMSS) at the moment of conversion start to ensure uniqueness and avoid overwrites
 
 ### Requirement 5
 
@@ -127,5 +128,5 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 5. WHEN the GUI window is closed, THE Kindle_Converter SHALL terminate the application process cleanly
 6. WHEN running in GUI mode, THE Kindle_Converter SHALL support all underlying conversion features (Generate, Detect, PDF2MD) available in the CLI
 7. WHEN the GUI application starts, THE Kindle_Converter SHALL pre-fill the output directory field with the user's Desktop path by default
-8. WHEN margin detection completes in the GUI, THE Kindle_Converter SHALL display the results (margins and recommendations) in a dedicated, easy-to-read area separate from the scrolling logs
+8. WHEN margin detection completes in the GUI, THE Kindle_Converter SHALL display the results (margins and recommendations) in a dedicated, easy-to-read area separate from the scrolling logs. The text color SHALL be high-contrast against the background for readability.
 ```

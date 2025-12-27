@@ -116,6 +116,14 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Update Orchestrator to report Left/Right margins in console
   - [x] Update GUI to display detection results in a structured way
 
+- [x] Fix: PDF Filename Timestamp Regression
+  - [x] Update `filemanager.generateTimestamp` to use `time.Now()`
+  - [x] Ensure formatting is `YYYYMMDD-HHMMSS`
+
+- [x] Fix: GUI Detection Result Visibility
+  - [x] Replace disabled `Entry` with `Label` or enabled `Entry` in `cmd/k2p-gui`
+  - [x] Ensure text has sufficient contrast
+
 
 
 ## Maintenance
