@@ -9,8 +9,8 @@ func TestApplyDefaults(t *testing.T) {
 	t.Run("Nil input should return defaults", func(t *testing.T) {
 		defaults := ApplyDefaults(nil)
 
-		if defaults.ScreenshotQuality != 95 {
-			t.Errorf("Expected default quality 95, got %d", defaults.ScreenshotQuality)
+		if defaults.ScreenshotQuality != 100 {
+			t.Errorf("Expected default quality 100, got %d", defaults.ScreenshotQuality)
 		}
 		if defaults.PageDelay != 500*time.Millisecond {
 			t.Errorf("Expected default page delay 500ms, got %v", defaults.PageDelay)

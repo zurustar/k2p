@@ -46,6 +46,9 @@ func main() {
 		statusLabel  *widget.Label
 	)
 
+	// Get defaults
+	defaults := config.ApplyDefaults(nil)
+
 	// --- 1. Settings Form Components ---
 
 	// Output
@@ -83,16 +86,20 @@ func main() {
 	pageTurnKey.SetSelected("Auto (Right/Left)")
 
 	quality = widget.NewEntry()
-	quality.SetText("95")
+	quality.SetText(strconv.Itoa(defaults.ScreenshotQuality))
 
 	pdfQuality = widget.NewSelect([]string{"High", "Medium", "Low"}, nil)
+	// Capitalize default for UI match (internal is "high", UI is "High")
+	// Or just default to High since we know it
 	pdfQuality.SetSelected("High")
 
 	pageDelay = widget.NewEntry()
-	pageDelay.SetText("500")
+	// Convert duration to int ms
+	pageDelay.SetText(strconv.Itoa(int(defaults.PageDelay.Milliseconds())))
 
 	startupDelay = widget.NewEntry()
-	startupDelay.SetText("3")
+	// Convert duration to int seconds
+	startupDelay.SetText(strconv.Itoa(int(defaults.StartupDelay.Seconds())))
 
 	// Trimming
 	trimH = widget.NewEntry()

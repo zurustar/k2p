@@ -53,7 +53,7 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 	// Create a copy to avoid modifying original if nil (though usually not nil here)
 	merged := &ConversionOptions{
 		// Set defaults first
-		ScreenshotQuality: 95,
+		ScreenshotQuality: 100,
 		PageDelay:         500 * time.Millisecond,
 		StartupDelay:      3 * time.Second,
 		ShowCountdown:     true,
