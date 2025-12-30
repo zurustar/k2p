@@ -79,7 +79,7 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 2. WHEN a user requests specific page delay settings, THE Kindle_Converter SHALL wait the specified time between page turns
 3. WHEN conversion settings are provided via configuration file, THE Kindle_Converter SHALL read and apply those settings
 4. WHEN invalid configuration values are provided, THE Kindle_Converter SHALL use default values and warn the user
-5. WHEN no configuration is specified, THE Kindle_Converter SHALL use sensible default settings for high-quality screenshot capture and PDF generation
+5. WHEN no configuration is specified, THE Kindle_Converter SHALL use sensible default settings (quality 100) for high-quality screenshot capture and PDF generation
 
 ### Requirement 7
 
@@ -116,6 +116,7 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 1. WHEN running automated tests, THE Kindle_Converter SHALL NOT play any sounds
 2. WHEN running the application normally, THE Kindle_Converter SHALL play completion sounds on success
 3. WHEN running the application normally, THE Kindle_Converter SHALL play error sounds on failure
+4. WHEN the application is packaged, THE Kindle_Converter SHALL be named `k2p-gui.app`.
 
 
 **User Story:** As a user who prefers graphical interfaces, I want a native macOS application window, so that I can configure and run conversions without using the command line.

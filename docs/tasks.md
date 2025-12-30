@@ -192,6 +192,13 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Implement `PlaySuccess` and `PlayError`
   - [x] Update `Orchestrator` to using new methods
 
+- [x] Update default quality to 100
+
+- [x] Fix hardcoded defaults in GUI
+
+- [x] Document app name requirement
+- [x] Re-verify build package name
+
 
   - [x] Trim uniform colored borders independently per edge
   - [x] Handle edge cases (no borders, mixed colors, top-only borders)

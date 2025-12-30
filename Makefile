@@ -1,5 +1,4 @@
-APP_NAME := Kindle2PDF
-BINARY_NAME_GUI := k2p-gui
+APP_NAME := k2p-gui
 APP_ID := com.k2p.app
 ICON := $(shell pwd)/cmd/k2p-gui/Icon.png
 GUI_SRC_DIR := ./cmd/k2p-gui
@@ -19,7 +18,7 @@ build: build-gui
 build-gui:
 	@echo "Building GUI..."
 	@mkdir -p $(BUILD_DIR)
-	@go build -ldflags "-w -s" -o $(BUILD_DIR)/$(BINARY_NAME_GUI) $(GUI_SRC_DIR)
+	@go build -ldflags "-w -s" -o $(BUILD_DIR)/$(APP_NAME) $(GUI_SRC_DIR)
 
 package: checks build-gui
 	mkdir -p $(BUILD_DIR)
