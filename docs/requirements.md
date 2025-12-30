@@ -55,7 +55,7 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 3. WHEN processing multiple books, THE Kindle_Converter SHALL maintain consistent naming conventions for output PDF files
 4. WHEN a target PDF file already exists, THE Kindle_Converter SHALL prompt the user for overwrite confirmation or skip the conversion
 5. WHEN the user cancels during batch processing, THE Kindle_Converter SHALL complete the current book conversion and then stop
-6. WHEN generating filenames automatically, THE Kindle_Converter SHALL use the current timestamp (YYYYMMDD-HHMMSS) at the moment of conversion start to ensure uniqueness and avoid overwrites
+6. WHEN generating filenames automatically, THE Kindle_Converter SHALL use the current timestamp (YYYYMMDD-HHMMSS) at the moment the conversion is initiated to ensure uniqueness and avoid overwrites
 
 ### Requirement 5
 
