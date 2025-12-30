@@ -64,10 +64,12 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 #### Acceptance Criteria
 
 1. WHEN screenshot capture fails during conversion, THE Kindle_Converter SHALL report the specific error and attempt to continue or skip to the next book
-2. WHEN insufficient disk space exists, THE Kindle_Converter SHALL detect this condition and inform the user before starting conversion
+2. WHEN insufficient disk space exists (less than 100MB), THE Kindle_Converter SHALL detect this condition and inform the user before starting conversion
 3. WHEN conversion fails, THE Kindle_Converter SHALL not affect the original book in the Kindle app
 4. WHEN the conversion process is interrupted, THE Kindle_Converter SHALL clean up any partial screenshot files and incomplete PDFs
 5. WHEN verbose logging is enabled, THE Kindle_Converter SHALL provide detailed conversion progress including page numbers and screenshot status
+6. WHEN the book exceeds 1000 pages, THE Kindle_Converter SHALL stop and report a limit reached error to prevent infinite loops
+7. WHEN the end of the book is detected (by comparing page content), THE Kindle_Converter SHALL stop measuring and capturing pages
 
 ### Requirement 6
 
@@ -80,6 +82,8 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 3. WHEN conversion settings are provided via configuration file, THE Kindle_Converter SHALL read and apply those settings
 4. WHEN invalid configuration values are provided, THE Kindle_Converter SHALL use default values and warn the user
 5. WHEN no configuration is specified, THE Kindle_Converter SHALL use sensible default settings (quality 100) for high-quality screenshot capture and PDF generation
+6. WHEN a user specifies the page turn direction (Auto, Left, or Right), THE Kindle_Converter SHALL use the specified key for page turning
+7. WHEN a user specifies the PDF compression quality (High, Medium, Low), THE Kindle_Converter SHALL apply the corresponding compression settings to the output PDF
 
 ### Requirement 7
 
@@ -128,7 +132,7 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 3. WHEN selecting file or directory paths, THE Kindle_Converter SHALL open standard macOS native file picker dialogs
 4. WHEN a conversion is running, THE Kindle_Converter SHALL display logs and status within the GUI window
 5. WHEN the GUI window is closed, THE Kindle_Converter SHALL terminate the application process cleanly
-6. WHEN running in GUI mode, THE Kindle_Converter SHALL support all underlying conversion features (Generate, Detect, PDF2MD) available in the CLI
+6. WHEN running in GUI mode, THE Kindle_Converter SHALL support all underlying conversion features (Generate, Detect, PDF2MD)
 7. WHEN the GUI application starts, THE Kindle_Converter SHALL pre-fill the output directory field with the user's Desktop path by default
 8. WHEN margin detection completes in the GUI, THE Kindle_Converter SHALL display the results (margins and recommendations) in a dedicated, easy-to-read area separate from the scrolling logs. The text color SHALL be high-contrast against the background for readability.
 ```
