@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestValidateOutputPath(t *testing.T) {
@@ -208,4 +209,26 @@ func TestHandleExistingFile(t *testing.T) {
 			t.Error("expected proceed=true with auto-confirm")
 		}
 	})
+}
+
+func TestResolveOutputPath_TimestampRegressions(t *testing.T) {
+	fm := NewFileManager()
+
+	path1, err := fm.ResolveOutputPath(os.TempDir())
+	if err != nil {
+		t.Fatalf("First ResolveOutputPath failed: %v", err)
+	}
+
+	// Wait at least 1.5 seconds to ensure timestamp changes (resolution is seconds)
+	// This ensures that the filename is generated at the moment of the call
+	time.Sleep(1500 * time.Millisecond)
+
+	path2, err := fm.ResolveOutputPath(os.TempDir())
+	if err != nil {
+		t.Fatalf("Second ResolveOutputPath failed: %v", err)
+	}
+
+	if path1 == path2 {
+		t.Errorf("Expected different filenames for calls at different times, got identical path: %s", path1)
+	}
 }

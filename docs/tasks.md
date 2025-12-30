@@ -199,6 +199,8 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 - [x] Document app name requirement
 - [x] Re-verify build package name
 
+- [x] Verify and test timestamp generation logic
+
 
   - [x] Trim uniform colored borders independently per edge
   - [x] Handle edge cases (no borders, mixed colors, top-only borders)
