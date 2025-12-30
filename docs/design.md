@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Kindle to PDF converter is a Go-based command-line application for macOS that automates the conversion of a currently open Kindle book to PDF format. The user manually opens a book in the macOS Kindle app, then runs this tool to automatically capture screenshots of each page and combine them into a single PDF document.
+The Kindle to PDF converter is a Go-based desktop application for macOS to PDF format. The user manually opens a book in the macOS Kindle app, then runs this tool to automatically capture screenshots of each page and combine them into a single PDF document.
 
 **Key Design Principle**: The tool processes **one book at a time** - the book that is currently open in the Kindle app. The user must manually open each book they want to convert.
 
@@ -11,12 +11,12 @@ The Kindle to PDF converter is a Go-based command-line application for macOS tha
 The application follows a simple layered architecture:
 
 ```
-┌─────────────────────┐       ┌─────────────────────┐
-│      CLI Layer      │       │      GUI Layer      │
-│  (Command Parsing)  │       │ (Fyne Native App)   │
-└─────────────────────┘       └─────────────────────┘
+┌─────────────────────┐
+│      GUI Layer      │
+│ (Fyne Native App)   │
+└─────────────────────┘
            │                             │
-           └──────────────┬──────────────┘
+           │
                           ▼
 ┌─────────────────────────────────────┐
 │      Conversion Orchestrator        │
@@ -38,17 +38,7 @@ The application follows a simple layered architecture:
 
 ## Components and Interfaces
 
-### CLI Component
-**Purpose**: Handle command-line argument parsing and user interaction
 
-**Responsibilities**:
-- Parse command-line flags (output path, quality settings, delays, verbose mode, version, help)
-- Provide opt-in flags for border trimming and page turn direction overrides
-- Display help and version information
-- Validate user input before starting conversion
-- Show clear error messages for invalid arguments
-
-**Dependencies**: Standard library `flag` package or `cobra` CLI framework
 
 ### GUI Component (Fyne)
 **Purpose**: Provide a native graphical user interface for macOS users.
@@ -132,6 +122,22 @@ type PDFGenerator interface {
 - Validate output PDF is readable
 
 **Implementation**: Use Go PDF library (e.g., `gofpdf`, `pdfcpu`)
+
+### Sound Player
+**Purpose**: Abstract sound playback to allow silencing during tests
+
+**Interface**:
+```go
+type Player interface {
+    PlaySuccess() error
+    PlayError() error
+}
+```
+
+**Implementation**:
+- `DefaultPlayer`: Uses `afplay` (Success: Glass.aiff, Error: Basso.aiff)
+- `NoOpPlayer`: Does nothing
+
 
 ### File Manager
 **Purpose**: Handle all file system operations
@@ -538,7 +544,7 @@ type PDFOptions struct {
 ### Unit Testing
 Test individual components in isolation with mocked dependencies:
 
-- **CLI Component**: Argument parsing, flag validation, help/version display
+
 - **File Manager**: Path validation, disk space checking, temp directory management
 
 - **PDF Generator**: PDF creation from test images, quality settings application

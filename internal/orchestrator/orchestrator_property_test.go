@@ -20,6 +20,7 @@ import (
 	"github.com/oumi/k2p/internal/config"
 	"github.com/oumi/k2p/internal/filemanager"
 	"github.com/oumi/k2p/internal/pdf"
+	"github.com/oumi/k2p/internal/sound"
 )
 
 // Mocks
@@ -124,6 +125,7 @@ func TestProperty21_DiskSpaceCheck(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 
 			opts := &config.ConversionOptions{
@@ -162,6 +164,7 @@ func TestProperty5_NoBookOpenDetection(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 
 			opts := &config.ConversionOptions{AutoConfirm: true}
@@ -200,6 +203,7 @@ func TestProperty15_SequentialProcessing(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				// capturer set below
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 
 			ctx := context.Background()
@@ -247,6 +251,7 @@ func TestProperty11_32_KindleStateValidation(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 			_, err := orch.ConvertCurrentBook(context.Background(), &config.ConversionOptions{AutoConfirm: true})
 			return err != nil && err.Error() == "Kindle app is not installed. Please install from the Mac App Store"
@@ -266,6 +271,7 @@ func TestProperty11_32_KindleStateValidation(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 			_, err := orch.ConvertCurrentBook(context.Background(), &config.ConversionOptions{AutoConfirm: true})
 			return err != nil && err.Error() == "Kindle app is not in foreground. Please bring Kindle to the front and try again"
@@ -295,6 +301,7 @@ func TestProperty2_OutputDirectoryRespected(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 
 			opts := &config.ConversionOptions{
@@ -333,6 +340,7 @@ func TestProperty3_DefaultOutputLocation(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 
 			// Empty output dir
@@ -388,6 +396,7 @@ func TestProperty4_SuccessMessageDisplay(t *testing.T) {
 				fileManager: fm,
 				pdfGen:      pg,
 				capturer:    cap,
+				soundPlayer: sound.NewNoOpPlayer(),
 			}
 
 			opts := &config.ConversionOptions{

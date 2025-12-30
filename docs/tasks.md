@@ -160,9 +160,39 @@ This document tracks the implementation progress of the Kindle to PDF converter.
 
 
 
-## Additional Features
-- [x] Image trimming: Automatic border removal
-  - [x] Detect black/white borders from corners
+## Phase 14: Web-Based GUI Implementation
+- [x] Create `cmd/k2p-gui` directory structure
+- [x] Create `cmd/k2p-gui/assets` for static files
+- [x] Implement HTML/JS frontend
+  - [x] Design form with all configuration options
+  - [x] Implement log streaming console
+- [x] Implement Go Web Server
+  - [x] Serve static files via `embed`
+  - [x] Implement API endpoints for conversion
+  - [x] Implement WebSocket/SSE for log streaming
+  - [x] Auto-open default browser on startup
+- [x] Integrate with Orchestrator
+  - [x] Hook up `ConversionOptions`
+  - [x] Redirect logs to frontend
+
+## Cleanup: Remove CLI
+- [x] Remove `cmd/k2p` directory
+- [x] Update `Makefile`
+- [x] Update `README.md`
+- [x] Update `requirements.md` and `design.md`
+
+## Bug Fixes
+- [ ] Disable sound during tests
+  - [x] Implement `SoundPlayer` interface
+  - [x] Refactor `Orchestrator` to use `SoundPlayer`
+  - [x] Update tests to use no-op player
+
+- [ ] Add error sound
+  - [x] Update `SoundPlayer` interface
+  - [x] Implement `PlaySuccess` and `PlayError`
+  - [x] Update `Orchestrator` to using new methods
+
+
   - [x] Trim uniform colored borders independently per edge
   - [x] Handle edge cases (no borders, mixed colors, top-only borders)
   - [x] 95% noise tolerance with lookahead gap skipping

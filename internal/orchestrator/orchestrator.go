@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/oumi/k2p/internal/imageprocessing"
 	"github.com/oumi/k2p/internal/pdf"
 	"github.com/oumi/k2p/internal/screenshot"
+	"github.com/oumi/k2p/internal/sound"
 )
 
 // ConversionResult contains the result of a conversion
@@ -49,6 +49,7 @@ type DefaultOrchestrator struct {
 	fileManager filemanager.FileManager
 	pdfGen      pdf.PDFGenerator
 	capturer    screenshot.Capturer
+	soundPlayer sound.Player
 }
 
 // NewOrchestrator creates a new conversion orchestrator
@@ -58,6 +59,7 @@ func NewOrchestrator() ConversionOrchestrator {
 		fileManager: filemanager.NewFileManager(),
 		pdfGen:      pdf.NewPDFGenerator(),
 		capturer:    screenshot.NewCapturer(),
+		soundPlayer: sound.NewPlayer(),
 	}
 }
 
@@ -68,12 +70,14 @@ func NewOrchestratorWithDeps(
 	fm filemanager.FileManager,
 	pg pdf.PDFGenerator,
 	cap screenshot.Capturer,
+	sp sound.Player,
 ) ConversionOrchestrator {
 	return &DefaultOrchestrator{
 		automation:  auto,
 		fileManager: fm,
 		pdfGen:      pg,
 		capturer:    cap,
+		soundPlayer: sp,
 	}
 }
 
@@ -109,6 +113,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 
 	// Step 4: Validate Kindle app state
 	if err := o.validateKindleState(options.Verbose); err != nil {
+		o.soundPlayer.PlayError()
 		return nil, err
 	}
 
@@ -124,6 +129,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	}
 
 	if err := o.fileManager.CheckDiskSpace(outputDir, estimatedSize); err != nil {
+		o.soundPlayer.PlayError()
 		return nil, err
 	}
 
@@ -154,6 +160,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	// Step 8: Page capture loop
 	pageCount, screenshots, margins, allMargins, err := o.capturePages(ctx, tempDir, options)
 	if err != nil {
+		o.soundPlayer.PlayError()
 		return nil, fmt.Errorf("failed to capture pages: %w", err)
 	}
 
@@ -206,7 +213,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 		fmt.Printf("\nDuration: %s\n", result.Duration.Round(time.Second))
 
 		// Play completion sound
-		exec.Command("afplay", "/System/Library/Sounds/Glass.aiff").Start()
+		o.soundPlayer.PlaySuccess()
 
 		return result, nil
 	}
@@ -250,6 +257,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	fmt.Println("\nGenerating PDF...")
 	pdfOpts := pdf.GetQualitySettings(options.PDFQuality)
 	if err := o.pdfGen.CreatePDF(screenshots, outputPath, pdfOpts); err != nil {
+		o.soundPlayer.PlayError()
 		return nil, fmt.Errorf("failed to generate PDF: %w", err)
 	}
 
@@ -267,7 +275,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 
 	// Step 13: Play completion sound
 	// Use macOS system sound to notify user (helpful when Kindle is in foreground)
-	exec.Command("afplay", "/System/Library/Sounds/Glass.aiff").Start()
+	o.soundPlayer.PlaySuccess()
 
 	// Step 14: Display success message
 	fmt.Println("\n=== Conversion Complete ===")

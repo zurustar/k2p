@@ -2,17 +2,17 @@
 
 ## Introduction
 
-A command-line tool written in Go that converts Kindle books to PDF format on macOS systems by automating the Kindle app to capture screenshots of each page and combining them into a PDF document. The tool provides a simple interface for users to convert their personal Kindle library books that are accessible through the macOS Kindle application.
+A native macOS application written in Go that converts Kindle books to PDF format by automating the Kindle app to capture screenshots of each page and combining them into a PDF document. The tool provides a simple graphical interface for users to convert their personal Kindle library books that are accessible through the macOS Kindle application.
 
 ## Glossary
 
-- **Kindle_Converter**: The Go-based command-line application that performs the conversion
+- **Kindle_Converter**: The Go-based application that performs the conversion
 - **Kindle_App**: The official Amazon Kindle application for macOS
 - **Open_Book**: Currently displayed book in the Kindle app (user must open manually)
 - **Target_PDF**: Output PDF file generated from captured page screenshots
 - **Page_Screenshot**: Individual image capture of a Kindle book page
 - **Automation_Engine**: macOS automation system used to turn pages and capture screenshots
-- **CLI**: Command Line Interface for user interaction
+
 
 ## Requirements
 
@@ -30,15 +30,7 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 
 ### Requirement 2
 
-**User Story:** As a command-line user, I want clear and intuitive CLI options, so that I can easily specify output locations and conversion settings.
-
-#### Acceptance Criteria
-
-1. WHEN a user runs the tool without arguments, THE Kindle_Converter SHALL display usage instructions and available options
-2. WHEN a user provides the help flag, THE Kindle_Converter SHALL show detailed command documentation
-3. WHEN a user specifies output paths, THE Kindle_Converter SHALL validate the path before starting conversion
-4. WHEN invalid command-line arguments are provided, THE Kindle_Converter SHALL display clear error messages and usage examples
-5. WHEN a user provides a version flag, THE Kindle_Converter SHALL display the current version information
+[DELETED] This requirement was for the CLI interface which has been removed.
 
 ### Requirement 3
 
@@ -115,7 +107,16 @@ A command-line tool written in Go that converts Kindle books to PDF format on ma
 6. WHEN analyzing margins, THE Kindle_Converter SHALL identify the minimum removable margin for each edge to avoid trimming actual book content that may appear on some pages
 7. WHEN trim margins are applied during PDF generation, THE Kindle_Converter SHALL use the same trimming algorithm for consistency with margin detection results
 
-### Requirement 9
+### Requirement 10
+
+**User Story:** As a developer, I want the system to be testable without side effects (like sounds), so that I can run tests silently and efficiently.
+
+#### Acceptance Criteria
+
+1. WHEN running automated tests, THE Kindle_Converter SHALL NOT play any sounds
+2. WHEN running the application normally, THE Kindle_Converter SHALL play completion sounds on success
+3. WHEN running the application normally, THE Kindle_Converter SHALL play error sounds on failure
+
 
 **User Story:** As a user who prefers graphical interfaces, I want a native macOS application window, so that I can configure and run conversions without using the command line.
 

@@ -25,7 +25,7 @@ We follow the **Git Flow** strategy defined in `.agent/workflows/git-flow.md`.
 **Rule**: Never commit directly to `main`. Always create a branch.
 
 ### 3. Project Structure
-- `cmd/k2p`: Main application entry point.
+- `cmd/k2p-gui`: Main application entry point (GUI).
 - `internal/`: Private library code (File Manager, Automation, PDF Gen, etc.).
 - `docs/`: Project documentation.
 - `test/`: Integration and E2E tests.
