@@ -124,6 +124,12 @@ This document tracks the implementation progress of the Kindle to PDF converter.
   - [x] Replace disabled `Entry` with `Label` or enabled `Entry` in `cmd/k2p-gui`
   - [x] Ensure text has sufficient contrast
 
+- [x] Fix: GUI Build Issues and Execution Blocking
+  - [x] `make build` now produces a proper macOS `.app` bundle via `fyne package` (with custom icon, no console window)
+  - [x] `build-binary` target added for bare binary builds (CI/testing)
+  - [x] `AutoConfirm` forced to `true` in GUI `main.go` — pressing Start IS the confirmation; prevents `fmt.Scanln()` blocking on nil stdin
+  - [x] Integration test: `NewOrchestratorWithDeps` was missing `sound.Player` argument
+  - [x] Updated `requirements.md` Requirement 10 AC 9 & 10
 
 
 ## Maintenance
