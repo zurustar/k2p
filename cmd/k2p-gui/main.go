@@ -254,7 +254,10 @@ func main() {
 			TrimTop:           parseInt(trimTop),
 			TrimBottom:        parseInt(trimBottom),
 			Verbose:           verbose.Checked,
-			AutoConfirm:       autoConfirm.Checked,
+			// AutoConfirm is always true in GUI mode: pressing Start IS the confirmation.
+			// Setting this to false would cause fmt.Scanln() in orchestrator to block
+			// indefinitely since GUI processes have no stdin.
+			AutoConfirm: true,
 		}
 
 		finalOpts := config.ApplyDefaults(opts)

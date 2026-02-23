@@ -14,6 +14,7 @@ import (
 	"github.com/oumi/k2p/internal/filemanager"
 	"github.com/oumi/k2p/internal/orchestrator"
 	"github.com/oumi/k2p/internal/pdf"
+	"github.com/oumi/k2p/internal/sound"
 )
 
 // Mock Automation for Integration
@@ -45,7 +46,7 @@ func TestOrchestratorIntegration_FullWorkflow(t *testing.T) {
 	capturer := &MockIntegrationCapturerForEndDetection{}
 
 	// Inject dependencies
-	orch := orchestrator.NewOrchestratorWithDeps(auto, fm, pg, capturer)
+	orch := orchestrator.NewOrchestratorWithDeps(auto, fm, pg, capturer, sound.NewNoOpPlayer())
 
 	// Create context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

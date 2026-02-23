@@ -13,10 +13,14 @@ all: package
 checks:
 	@if [ ! -f "$(ICON)" ]; then echo "Error: $(ICON) not found. Please ensure icon exists."; exit 1; fi
 
-build: build-gui
+# build: Produces a proper macOS .app bundle (with icon, no console window).
+# This is the main development build target. Uses fyne package internally.
+build: package
 
-build-gui:
-	@echo "Building GUI..."
+# build-binary: Produces a bare executable binary (for CI/testing, not for end-users).
+# Note: Running this binary directly will open a console window on macOS.
+build-binary:
+	@echo "Building binary (no .app bundle)..."
 	@mkdir -p $(BUILD_DIR)
 	@go build -ldflags "-w -s" -o $(BUILD_DIR)/$(APP_NAME) $(GUI_SRC_DIR)
 

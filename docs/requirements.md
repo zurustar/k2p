@@ -135,4 +135,5 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 6. WHEN running in GUI mode, THE Kindle_Converter SHALL support all underlying conversion features (Generate, Detect, PDF2MD)
 7. WHEN the GUI application starts, THE Kindle_Converter SHALL pre-fill the output directory field with the user's Desktop path by default
 8. WHEN margin detection completes in the GUI, THE Kindle_Converter SHALL display the results (margins and recommendations) in a dedicated, easy-to-read area separate from the scrolling logs. The text color SHALL be high-contrast against the background for readability.
-```
+9. WHEN the user presses the Start button in the GUI, THE Kindle_Converter SHALL treat this as confirmation and proceed without waiting for stdin input (AutoConfirm is always true in GUI mode).
+10. WHEN `make build` is executed, THE Kindle_Converter SHALL produce a proper macOS `.app` bundle (via `fyne package`) with the correct application icon, not a bare console executable.
