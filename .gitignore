@@ -7,3 +7,5 @@ test/integration/debug_samples/
 /k2p
 /k2p-gui
 *.app
+.serena/
+CLAUDE.md
