@@ -352,10 +352,10 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 		fmt.Printf("  hasCustomTrim:  %v\n", hasCustomTrim)
 	}
 
-	// Auto-detect page turn direction (unless explicitly set to "left")
+	// Auto-detect page turn direction only when not explicitly set to "left" or "right"
 	direction := options.PageTurnKey
-	if direction != "left" {
-		// Try to auto-detect
+	if direction != "left" && direction != "right" {
+		// Try to auto-detect (triggered when direction is "auto" or unrecognized)
 		if options.Verbose {
 			fmt.Println("\nAuto-detecting page turn direction...")
 		}
@@ -373,7 +373,7 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 			}
 		}
 	} else if options.Verbose {
-		fmt.Println("\nUsing configured direction: left")
+		fmt.Printf("\nUsing configured direction: %s\n", direction)
 	}
 
 	fmt.Println("\nCapturing pages...")
@@ -444,13 +444,12 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 					allIdentical = false
 					break
 				}
-				if options.Verbose {
-					fmt.Printf("[DEBUG] Compare [%d] %s vs [%d] %s: %.2f%% similarity\n",
-						i-1, filepath.Base(screenshots[i-1]),
-						i, filepath.Base(screenshots[i]),
-						similarity*100)
+				// Log similarity whenever it's suspiciously high (≥99%), not just in verbose mode
+				if similarity >= 0.99 || options.Verbose {
+					fmt.Printf("\n[End detection] Page %d vs %d: %.4f%% similarity",
+						i, i+1, similarity*100)
 				}
-				if similarity < 0.995 { // 99.5% - end-of-book pages are 100% identical
+				if similarity < 0.999 { // 99.9% - truly identical end-of-book pages are 100%; sparse pages can reach 99.5-99.8%
 					allIdentical = false
 					break
 				}
@@ -460,7 +459,7 @@ func (o *DefaultOrchestrator) capturePages(ctx context.Context, tempDir string, 
 				// Last 5 pages are identical - we've reached the end
 				// These are the rating/review screens, not actual book content
 				// Remove the last 5 pages from screenshots AND margins
-				fmt.Printf("\n\nReached end of book (last 5 pages are identical)\n")
+				fmt.Printf("\n\nReached end of book (last 5 pages are 99.9%%+ identical)\n")
 				fmt.Printf("Removing last 5 pages (rating screens) from PDF and margin analysis\n")
 				screenshots = screenshots[:len(screenshots)-5]
 				// Also remove from margin analysis to prevent gray backgrounds from affecting detection

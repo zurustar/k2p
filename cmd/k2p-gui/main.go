@@ -231,15 +231,12 @@ func main() {
 		}
 
 		// Helper for page turn
-		ptKey := "right"
-		if pageTurnKey.Selected == "Left" {
+		ptKey := "auto"
+		if pageTurnKey.Selected == "Right" {
+			ptKey = "right"
+		} else if pageTurnKey.Selected == "Left" {
 			ptKey = "left"
 		}
-		// "Auto" -> "right" (orchestrator handles auto-detection logic if configured)
-		// Wait, Orchestrator expects "right" or "left".
-		// If "Auto" is selected, we should verify what orchestrator expects.
-		// Current logic in Orchestrator: if options.PageTurnKey != "left", it attempts auto-detect.
-		// So passing "right" (default) allows auto-detect.
 
 		opts := &config.ConversionOptions{
 			OutputDir:         outputDir.Text,
