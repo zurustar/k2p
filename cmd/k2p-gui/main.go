@@ -19,6 +19,7 @@ import (
 
 	"github.com/oumi/k2p/internal/config"
 	"github.com/oumi/k2p/internal/converter"
+	"github.com/oumi/k2p/internal/focus"
 	"github.com/oumi/k2p/internal/orchestrator"
 )
 
@@ -41,6 +42,8 @@ func main() {
 		trimBottom   *widget.Entry
 		verbose      *widget.Check
 		autoConfirm  *widget.Check
+		playSound    *widget.Check
+		bringToFront *widget.Check
 		logArea      *widget.Entry
 		startBtn     *widget.Button
 		statusLabel  *widget.Label
@@ -113,6 +116,12 @@ func main() {
 	verbose = widget.NewCheck("Verbose Logging", nil)
 	autoConfirm = widget.NewCheck("Auto Confirm", nil)
 
+	// Completion notifications (both on by default)
+	playSound = widget.NewCheck("Play sound on completion", nil)
+	playSound.SetChecked(true)
+	bringToFront = widget.NewCheck("Bring window to front on completion", nil)
+	bringToFront.SetChecked(true)
+
 	// --- 2. Layouts ---
 
 	// Helper to create form rows
@@ -143,6 +152,7 @@ func main() {
 		formRow("PDF Qual:", pdfQuality),
 		formRow("Delays (ms/s):", pageDelay, startupDelay),
 		container.NewHBox(verbose, autoConfirm),
+		container.NewHBox(playSound, bringToFront),
 	)
 
 	// Tab 2: Detect Margins
@@ -153,6 +163,7 @@ func main() {
 		formRow("Page Turn:", pageTurnKey),
 		formRow("Delays (ms/s):", pageDelay, startupDelay),
 		container.NewHBox(verbose, autoConfirm),
+		container.NewHBox(playSound, bringToFront),
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("Result:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 	)
@@ -210,6 +221,7 @@ func main() {
 
 	// Log Writer
 	logWriter := &uiWriter{entry: logArea}
+	activator := focus.NewActivator()
 
 	startBtn.OnTapped = func() {
 		startBtn.Disable()
@@ -258,6 +270,8 @@ func main() {
 		}
 
 		finalOpts := config.ApplyDefaults(opts)
+		// ApplyDefaults cannot override PlaySound with false, so set it afterwards
+		finalOpts.PlaySound = playSound.Checked
 
 		// Run in Goroutine
 		go func() {
@@ -345,6 +359,15 @@ func main() {
 			os.Stdout = oldStdout
 			os.Stderr = oldStderr
 			<-outC // wait for copier
+
+			// Bring k2p-gui to front so the user notices completion
+			// (Kindle is usually fullscreen during capture)
+			if focus.ShouldBringToFront(finalOpts.Mode, bringToFront.Checked) {
+				if ferr := activator.BringToFront(); ferr != nil {
+					logWriter.Write([]byte(ferr.Error() + "\n"))
+				}
+				fyne.Do(w.RequestFocus)
+			}
 
 			if err != nil {
 				dialog.ShowError(err, w)

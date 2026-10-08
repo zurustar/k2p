@@ -436,7 +436,91 @@ func (m *MockCapturerFunc) CaptureFrontmostWindow(path string) error {
 	return os.WriteFile(path, []byte("dummy"), 0644)
 }
 
+// RecordingPlayer counts sound playback calls
+type RecordingPlayer struct {
+	SuccessCount int
+	ErrorCount   int
+}
+
+func (p *RecordingPlayer) PlaySuccess() error { p.SuccessCount++; return nil }
+func (p *RecordingPlayer) PlayError() error   { p.ErrorCount++; return nil }
+
+// Property 36: Sound Toggle
+// For any conversion, error sounds are played if and only if PlaySound is true.
+func TestProperty36_SoundToggleOnError(t *testing.T) {
+	parameters := gopter.DefaultTestParameters()
+	parameters.MinSuccessfulTests = 100
+	properties := gopter.NewProperties(parameters)
+
+	properties.Property("error sound follows PlaySound", prop.ForAll(
+		func(playSound bool) bool {
+			player := &RecordingPlayer{}
+			orch := &DefaultOrchestrator{
+				automation:  &MockAutomation{Installed: true, BookOpen: false, Foreground: true},
+				fileManager: &MockFileManager{ResolvePath: "/tmp/out.pdf", HandleExists: true},
+				pdfGen:      &MockPDFGenerator{},
+				capturer:    &MockCapturer{},
+				soundPlayer: player,
+			}
+
+			opts := &config.ConversionOptions{AutoConfirm: true, PlaySound: playSound}
+			_, err := orch.ConvertCurrentBook(context.Background(), opts)
+
+			expected := 0
+			if playSound {
+				expected = 1
+			}
+			return err != nil && player.ErrorCount == expected && player.SuccessCount == 0
+		},
+		gen.Bool(),
+	))
+
+	properties.TestingRun(t)
+}
+
+// Property 36: Sound Toggle
+// For any successful conversion, the success sound is played if and only if PlaySound is true.
+func TestProperty36_SoundToggleOnSuccess(t *testing.T) {
+	for _, playSound := range []bool{true, false} {
+		t.Run(fmt.Sprintf("PlaySound=%v", playSound), func(t *testing.T) {
+			player := &RecordingPlayer{}
+			orch := &DefaultOrchestrator{
+				automation:  &MockAutomation{Installed: true, BookOpen: true, Foreground: true},
+				fileManager: &MockFileManager{ResolvePath: "/tmp/out.pdf", HandleExists: true},
+				pdfGen:      &MockPDFGenerator{},
+				capturer:    &MockCapturer{},
+				soundPlayer: player,
+			}
+
+			opts := &config.ConversionOptions{
+				AutoConfirm: true,
+				Mode:        "generate",
+				PageDelay:   time.Millisecond,
+				PlaySound:   playSound,
+			}
+
+			var err error
+			captureStdout(func() {
+				_, err = orch.ConvertCurrentBook(context.Background(), opts)
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			expected := 0
+			if playSound {
+				expected = 1
+			}
+			if player.SuccessCount != expected || player.ErrorCount != 0 {
+				t.Errorf("expected success=%d error=0, got success=%d error=%d",
+					expected, player.SuccessCount, player.ErrorCount)
+			}
+		})
+	}
+}
+
 // Ensure mock structs satisfy interfaces
 var _ automation.KindleAutomation = &MockAutomation{}
 var _ filemanager.FileManager = &MockFileManager{}
 var _ pdf.PDFGenerator = &MockPDFGenerator{}
+var _ sound.Player = &RecordingPlayer{}

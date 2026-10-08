@@ -24,6 +24,9 @@ func TestApplyDefaults(t *testing.T) {
 		if !defaults.ShowCountdown {
 			t.Error("Expected default ShowCountdown=true")
 		}
+		if !defaults.PlaySound {
+			t.Error("Expected default PlaySound=true")
+		}
 	})
 
 	t.Run("Override defaults with provided values", func(t *testing.T) {
