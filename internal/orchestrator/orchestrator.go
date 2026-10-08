@@ -88,6 +88,12 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 		Warnings: []string{},
 	}
 
+	// Silence completion/error sounds for this run if disabled
+	player := o.soundPlayer
+	if !options.PlaySound {
+		player = sound.NewNoOpPlayer()
+	}
+
 	// Step 1: Display preparation instructions
 	fmt.Println("=== Kindle to PDF Converter ===")
 	fmt.Println("\nPlease ensure:")
@@ -113,7 +119,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 
 	// Step 4: Validate Kindle app state
 	if err := o.validateKindleState(options.Verbose); err != nil {
-		o.soundPlayer.PlayError()
+		player.PlayError()
 		return nil, err
 	}
 
@@ -129,7 +135,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	}
 
 	if err := o.fileManager.CheckDiskSpace(outputDir, estimatedSize); err != nil {
-		o.soundPlayer.PlayError()
+		player.PlayError()
 		return nil, err
 	}
 
@@ -160,7 +166,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	// Step 8: Page capture loop
 	pageCount, screenshots, margins, allMargins, err := o.capturePages(ctx, tempDir, options)
 	if err != nil {
-		o.soundPlayer.PlayError()
+		player.PlayError()
 		return nil, fmt.Errorf("failed to capture pages: %w", err)
 	}
 
@@ -213,7 +219,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 		fmt.Printf("\nDuration: %s\n", result.Duration.Round(time.Second))
 
 		// Play completion sound
-		o.soundPlayer.PlaySuccess()
+		player.PlaySuccess()
 
 		return result, nil
 	}
@@ -257,7 +263,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 	fmt.Println("\nGenerating PDF...")
 	pdfOpts := pdf.GetQualitySettings(options.PDFQuality)
 	if err := o.pdfGen.CreatePDF(screenshots, outputPath, pdfOpts); err != nil {
-		o.soundPlayer.PlayError()
+		player.PlayError()
 		return nil, fmt.Errorf("failed to generate PDF: %w", err)
 	}
 
@@ -275,7 +281,7 @@ func (o *DefaultOrchestrator) ConvertCurrentBook(ctx context.Context, options *c
 
 	// Step 13: Play completion sound
 	// Use macOS system sound to notify user (helpful when Kindle is in foreground)
-	o.soundPlayer.PlaySuccess()
+	player.PlaySuccess()
 
 	// Step 14: Display success message
 	fmt.Println("\n=== Conversion Complete ===")

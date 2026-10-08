@@ -138,6 +138,31 @@ type Player interface {
 - `DefaultPlayer`: Uses `afplay` (Success: Glass.aiff, Error: Basso.aiff)
 - `NoOpPlayer`: Does nothing
 
+**Toggling**: When `ConversionOptions.PlaySound` is false, the orchestrator uses `NoOpPlayer` for that run (Requirement 11.12). `ApplyDefaults` sets it to true; like `ShowCountdown`, a false input cannot override the default there, so callers that expose the option (the GUI) set it after `ApplyDefaults`.
+
+### Window Activator
+**Purpose**: Bring the k2p-gui window to front when a Generate/Detect run finishes, so the user notices completion while Kindle is fullscreen (Requirement 11.13–11.15)
+
+**Interface** (`internal/focus`):
+```go
+type Activator interface {
+    BringToFront() error
+}
+
+// Reports whether the window should be brought to front after a run
+func ShouldBringToFront(mode string, enabled bool) bool
+```
+
+**Implementation**:
+- `DefaultActivator`: Runs `osascript` to make its own process frontmost via System Events (`set frontmost of (first process whose unix id is <pid>) to true`). Uses the same Accessibility permission already required for page turning. Fyne's `RequestFocus` alone cannot take focus from another app on recent macOS, so the GUI calls it in addition to this.
+- `NoOpActivator`: Does nothing (for testing)
+- `ShouldBringToFront`: `true` only when `enabled` and mode is `generate` or `detect`; independent of success/failure
+
+**GUI Integration** (Requirement 11.11):
+- Checkboxes "Play sound on completion" and "Bring window to front on completion", both checked by default, shared by the Generate and Detect tabs
+- "Play sound" is assigned to `PlaySound` after `ApplyDefaults`
+- `BringToFront` is called after the run finishes and before the result dialog is shown; failures are logged only
+
 
 ### File Manager
 **Purpose**: Handle all file system operations
@@ -238,6 +263,9 @@ type ConversionOptions struct {
 
     // Input file path for PDF to Markdown conversion
     InputFile string
+
+    // Play completion/error sounds (default: true)
+    PlaySound bool
 }
 
 func (o *ConversionOptions) Validate() error {
@@ -539,6 +567,14 @@ type PDFOptions struct {
 **For any** conversion with configured startup delay, a countdown timer showing remaining preparation time must be displayed.
 **Validates**: Requirement 7.5
 
+### Property 35: Bring To Front On Completion
+**For any** mode and option state, the window is brought to front if and only if the option is enabled and the mode is Generate or Detect; the activation script always targets the k2p-gui process's own PID.
+**Validates**: Requirements 11.13, 11.14
+
+### Property 36: Sound Toggle
+**For any** conversion, completion/error sounds are played if and only if `PlaySound` is true.
+**Validates**: Requirement 11.12
+
 ## Testing Strategy
 
 ### Unit Testing
@@ -554,7 +590,7 @@ Use Go's `testing/quick` or `rapid` framework to verify correctness properties:
 
 - **Requirements**: Minimum 100 iterations per property test
 - **Tag Format**: `// Property {number}: {property description}`
-- **Coverage**: Each of the 34 correctness properties must have a corresponding property-based test
+- **Coverage**: Each of the 36 correctness properties must have a corresponding property-based test
 - **Placement**: Tests should be placed close to implementation
 
 Example:

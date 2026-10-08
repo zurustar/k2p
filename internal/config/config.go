@@ -46,6 +46,9 @@ type ConversionOptions struct {
 
 	// Input file path for PDF to Markdown conversion
 	InputFile string
+
+	// Play completion/error sounds (default: true)
+	PlaySound bool
 }
 
 // ApplyDefaults applies default values to any unset options
@@ -66,6 +69,7 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 		TrimHorizontal:    0,
 
 		PageTurnKey: "right",
+		PlaySound:   true,
 	}
 
 	if opts == nil {
@@ -100,6 +104,7 @@ func ApplyDefaults(opts *ConversionOptions) *ConversionOptions {
 
 	// ShowCountdown is not exposed in CLI, so we stick to default (true)
 	// unless we decide to expose it later.
+	// PlaySound likewise stays true here; the GUI sets it after ApplyDefaults.
 
 	if opts.Mode != "" {
 		merged.Mode = opts.Mode

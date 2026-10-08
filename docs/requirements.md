@@ -122,6 +122,7 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 3. WHEN running the application normally, THE Kindle_Converter SHALL play error sounds on failure
 4. WHEN the application is packaged, THE Kindle_Converter SHALL be named `k2p-gui.app`.
 
+### Requirement 11
 
 **User Story:** As a user who prefers graphical interfaces, I want a native macOS application window, so that I can configure and run conversions without using the command line.
 
@@ -137,3 +138,8 @@ A native macOS application written in Go that converts Kindle books to PDF forma
 8. WHEN margin detection completes in the GUI, THE Kindle_Converter SHALL display the results (margins and recommendations) in a dedicated, easy-to-read area separate from the scrolling logs. The text color SHALL be high-contrast against the background for readability.
 9. WHEN the user presses the Start button in the GUI, THE Kindle_Converter SHALL treat this as confirmation and proceed without waiting for stdin input (AutoConfirm is always true in GUI mode).
 10. WHEN `make build` is executed, THE Kindle_Converter SHALL produce a proper macOS `.app` bundle (via `fyne package`) with the correct application icon, not a bare console executable.
+11. WHEN the GUI application starts, THE Kindle_Converter SHALL show two completion notification options as checkboxes shared by the Generate and Detect tabs: "Play sound on completion" and "Bring window to front on completion". Both SHALL be enabled by default.
+12. WHEN a Generate or Detect run finishes (successfully or with an error) in the GUI and "Play sound on completion" is enabled, THE Kindle_Converter SHALL play the completion/error sound (Requirement 10.2, 10.3). WHEN the option is disabled, THE Kindle_Converter SHALL NOT play any sound.
+13. WHEN a Generate or Detect run finishes (successfully or with an error) in the GUI and "Bring window to front on completion" is enabled, THE Kindle_Converter SHALL activate the k2p-gui application and focus its window, so that the user notices completion even while the Kindle app is in fullscreen.
+14. WHEN a PDF2MD run finishes, THE Kindle_Converter SHALL NOT change the frontmost application, regardless of the option.
+15. WHEN bringing the window to front fails, THE Kindle_Converter SHALL log the error and SHALL NOT treat the conversion as failed.
