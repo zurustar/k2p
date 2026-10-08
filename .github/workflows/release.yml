@@ -20,7 +20,7 @@ jobs:
           cache: true
 
       - name: Install fyne CLI
-        run: go install fyne.io/fyne/v2/cmd/fyne@v2.7.1
+        run: go install fyne.io/tools/cmd/fyne@v1.7.0
 
       - name: Build .app bundle
         run: make build
