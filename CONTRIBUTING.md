@@ -35,6 +35,11 @@ We follow the **Git Flow** strategy defined in `.agent/workflows/git-flow.md`.
 ### Prerequisites
 - Go 1.21+
 - Make
+- fyne CLI (used by `make build` to create the `.app` bundle):
+  ```bash
+  go install fyne.io/tools/cmd/fyne@v1.7.0
+  ```
+  Note: the legacy `fyne.io/fyne/v2/cmd/fyne` does not support the `--app-id` flag used by the Makefile.
 
 ### Build
 ```bash
