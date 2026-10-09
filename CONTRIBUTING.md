@@ -4,16 +4,8 @@ Thank you for your interest in contributing to k2p! This document provides guide
 
 ## Development Workflow
 
-We strictly follow a structured workflow to maintain code quality and documentation consistency.
-
-### 1. Mandatory Pre-Work
-Before starting ANY implementation or bug fix, you **MUST** run:
-
-```bash
-/start-work
-```
-
-This ensures you read `.agent/workflows/start-work.md`. **Documentation updates (tasks.md, design.md) must typically happen BEFORE code changes.**
+### 1. Development Process
+Follow [.agent/workflows/start-work.md](.agent/workflows/start-work.md): update docs first, write tests first, then implement.
 
 ### 2. Git Branching
 We follow the **Git Flow** strategy defined in `.agent/workflows/git-flow.md`.
@@ -69,14 +61,6 @@ make test
 - **Do not** leave debug artifacts (like `.png` files) in the repository.
 
 ## Release Process
-1. Ensure `docs/tasks.md` is fully updated.
+1. Ensure completed tasks have been removed from `docs/tasks.md`.
 2. Verify all tests pass.
-3. Update version in `cmd/k2p/main.go` (or via build tag).
-4. Tag the release in Git.
-
-## AI Agents
-If you are an AI agent working on this repo:
-- **ALWAYS** check `docs/tasks.md` first.
-- **ALWAYS** update `docs/tasks.md` as you progress.
-- **NEVER** skip the `/start-work` workflow.
-- **Clean up** any test images/artifacts you generate immediately after verification.
+3. Push a `v*` tag on `main` (e.g. `v0.1.0`). The Release workflow builds the `.app` and publishes it to GitHub Releases.
