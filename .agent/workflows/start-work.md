@@ -4,15 +4,16 @@ description: Workflow to follow before starting any implementation work
 
 # Development Guidelines
 
-## **MANDATORY: Update Documentation Before Implementation**
+## **MANDATORY: Documentation First, Tests First**
 
-When implementing any new feature or making significant changes:
+When implementing any new feature, bug fix, or significant change:
 
 ### Order of Operations
 
 **YOU MUST FOLLOW THIS ORDER:**
 
-0. **Define Git Branch Strategy**
+0. **Check docs/tasks.md and Define Git Branch Strategy**
+   - Read `docs/tasks.md` first. If work is in progress, resume it from "Next Step".
    - Read `.agent/workflows/git-flow.md`.
    - **CRITICAL**: In your **Implementation Plan**, you MUST include a specific step to create or switch to the correct branch (e.g., `git checkout -b feature/name`).
    - Run `git status` to verify your current environment.
@@ -29,57 +30,67 @@ When implementing any new feature or making significant changes:
    - Keep the design document in sync with implementation
 
 3. **Update docs/tasks.md BEFORE implementing**
-   - Add new tasks/phases for the feature or bug fix
-   - Place them in the appropriate section (Bug Fixes, Additional Features, etc.)
+   - Add the tasks for this work under an "In Progress" section
    - Mark tasks as `[ ]` (incomplete) initially
-   - Update "Current Status" section if needed
+   - Update the "Current Status" section (branch, state, next step)
 
-4. **Implement the code**
-   - Now you can make the actual code changes
+4. **Write tests FIRST**
+   - Write tests that express the acceptance criteria and correctness properties
+   - Run them and **confirm they fail** before writing any implementation
+   - Do not weaken or skip a test to make it pass
+
+5. **Implement the code**
+   - Write the minimum code needed to make the tests pass
    - Follow the plan from the documentation
 
-5. **Mark tasks complete in docs/tasks.md**
+6. **Mark tasks complete in docs/tasks.md**
    - Update tasks to `[x]` when completed
    - Keep task list synchronized with actual progress
 
-6. **Verify design.md and requirements.md match implementation**
-   - Ensure documentation reflects what was actually built
+7. **Verify**
+   - Run `make build` and all tests
+   - For anything that needs the real Kindle app, follow `.agent/workflows/manual-verification.md`
+   - Ensure docs/requirements.md and docs/design.md match what was actually built
+
+8. **Clean up docs/tasks.md when merging**
+   - Remove the completed tasks for this work (history lives in git and PRs)
 
 ## Why This Matters
 
 - **Design.md** is the source of truth for architecture and interfaces
-- **Tasks.md** tracks implementation progress and serves as a checklist
-- Updating documentation first ensures thoughtful design before coding
+- **Tests written first** turn requirements into executable checks, so an AI agent cannot claim "done" without evidence
+- **Tasks.md** lets anyone (human or AI) resume interrupted work
 - Keeping docs in sync prevents drift between design and implementation
 
 ## Consequences of Not Following
 
 - ❌ Design document becomes outdated and useless
-- ❌ Task tracking becomes meaningless
+- ❌ Untested or unverifiable changes slip in
+- ❌ Interrupted work cannot be resumed
 - ❌ Future developers (including AI agents) will be confused
-- ❌ Code reviews become harder without up-to-date design docs
 
-## Task Management Rules
+## Task Management Rules (docs/tasks.md)
 
-### Task Completion Updates
-When completing tasks during implementation:
-1. **Update `docs/tasks.md`** immediately after completing each task or sub-task
-2. Mark completed items with `[x]` instead of `[ ]`
-3. Keep the task list synchronized with actual progress
-4. Update the "Current Status" section at the bottom of `docs/tasks.md`
+`docs/tasks.md` is a **handoff file**, not a history log.
 
-### Workflow
-1. Complete a task or sub-task
-2. Update `docs/tasks.md` to mark it as complete
-3. Continue to next task
-4. Repeat
+- Keep only in-progress and upcoming tasks
+- Update it immediately after completing each task or sub-task
+- Keep "Current Status" accurate: branch, state, and the concrete next step
 
-This ensures the task tracking document always reflects the current state of the project.
+### Interrupting Work
+Before stopping in the middle of work (end of session, context limit, waiting for the user):
+1. Update "Current Status" with the exact next step and anything the next person must know
+2. Commit `docs/tasks.md` together with the work in progress on the feature branch
+
+### Resuming Work
+1. Read `docs/tasks.md`
+2. Switch to the branch in "Current Status"
+3. Continue from "Next Step"
 
 ## Implementation Notes
 
 ### Testing
-- Run tests after implementing each component
+- Write tests before implementation (see Order of Operations)
 - Ensure all tests pass before moving to the next phase
 - Write property-based tests with minimum 100 iterations
 
@@ -92,12 +103,15 @@ This ensures the task tracking document always reflects the current state of the
 ## Quick Reference
 
 **For ANY code change (including bug fixes):**
-1. ✓ Update docs/requirements.md (if new requirements)
-2. ✓ Update docs/tasks.md FIRST (add task items)
-3. ✓ Update docs/design.md if needed (design changes)
-4. ✓ Implement the code
-5. ✓ Mark tasks as [x] in docs/tasks.md
-6. ✓ Run `make build` and tests
-7. ✓ Verify docs (requirements/design) still match implementation
+1. ✓ Read docs/tasks.md, create/switch branch
+2. ✓ Update docs/requirements.md (if new requirements)
+3. ✓ Update docs/design.md (if design changes)
+4. ✓ Add tasks to docs/tasks.md
+5. ✓ Write tests and confirm they fail
+6. ✓ Implement until tests pass
+7. ✓ Mark tasks as [x] in docs/tasks.md
+8. ✓ Run `make build` and tests; manual verification if needed
+9. ✓ Verify docs (requirements/design) still match implementation
+10. ✓ Remove completed tasks from docs/tasks.md when merging
 
-**NEVER skip documentation updates, even for "small" changes.**
+**NEVER skip documentation updates or tests, even for "small" changes.**
